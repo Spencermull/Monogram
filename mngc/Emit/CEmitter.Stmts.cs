@@ -147,11 +147,3 @@ public partial class CEmitter
     }
 }
 
-// Expression stub — replaced in CEmitter.Exprs.cs
-public partial class CEmitter
-{
-    private string EmitExpr(ExprNode expr)
-    {
-        throw new NotImplementedException();
-    }
-}
