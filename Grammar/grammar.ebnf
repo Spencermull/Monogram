@@ -76,6 +76,9 @@ generic_args    ::= "<" type_arg ("," type_arg)* ">"
 type_arg        ::= type_expr
                   | type_expr "->" type_expr    /* lattice transform arg */
 
+/* slice<T> — length-tracked array; T is erased to uintptr_t in C */
+slice_type      ::= "slice" "<" type_expr ">"
+
 primitive_type  ::= "int8"  | "int16"  | "int32"  | "int64"
                   | "uint8" | "uint16" | "uint32" | "uint64"
                   | "int"
@@ -146,10 +149,10 @@ for_stmt        ::= for_typed       /* typed stack/mapped operation */
 /* for -> type mod: x { } */
 for_typed       ::= "for" "->" "type" IDENTIFIER ":" IDENTIFIER block
 
-/* for -> :val in x { } */
+/* for -> :val in x { }  — mapped (parallel-intent) foreach; x must be slice<T> */
 for_map         ::= "for" "->" ":" IDENTIFIER "in" expr block
 
-/* for :val in x { } */
+/* for :val in x { }    — x must be slice<T>; v binds as uintptr_t */
 for_each        ::= "for" ":" IDENTIFIER "in" expr block
 
 /* for :i -> x >= 0; { } */
