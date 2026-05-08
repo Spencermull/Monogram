@@ -8,7 +8,6 @@ public partial class Parser
     private FuncDeclNode ParseFuncDecl()
     {
         Expect(TokenType.Func);
-        Expect(TokenType.Colon);
         var name = ExpectIdentifier();
         var generics = ParseGenericParams();
 
@@ -48,7 +47,6 @@ public partial class Parser
     private OpDeclNode ParseOpDecl()
     {
         Expect(TokenType.Op);
-        Expect(TokenType.Colon);
         var name = ExpectIdentifier();
 
         Expect(TokenType.LParen);

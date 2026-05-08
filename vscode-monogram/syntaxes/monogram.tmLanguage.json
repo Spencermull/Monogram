@@ -33,7 +33,7 @@
                 },
                 {
                     "name": "keyword.declaration.monogram",
-                    "match": "\\b(func|op|type|init)\\b"
+                    "match": "\\b(func:|op:|type|init)\\b"
                 },
                 {
                     "name": "storage.modifier.monogram",
