@@ -19,6 +19,14 @@ public static class GccDriver
             UseShellExecute        = false,
         };
 
+        // When using a full path, inject the compiler's bin dir so its DLLs are found
+        if (Path.IsPathRooted(compiler))
+        {
+            var binDir = Path.GetDirectoryName(compiler)!;
+            var existing = psi.Environment.TryGetValue("PATH", out var p) ? p : Environment.GetEnvironmentVariable("PATH") ?? "";
+            psi.Environment["PATH"] = binDir + Path.PathSeparator + existing;
+        }
+
         psi.ArgumentList.Add(cPath);
         psi.ArgumentList.Add("-o");
         psi.ArgumentList.Add(outputPath);
@@ -31,6 +39,14 @@ public static class GccDriver
 
         return new CompileResult(proc.ExitCode == 0, errors);
     }
+
+    private static readonly string[] WindowsFallbackPaths =
+    [
+        @"C:\msys64\ucrt64\bin\gcc.exe",
+        @"C:\msys64\mingw64\bin\gcc.exe",
+        @"C:\msys64\clang64\bin\clang.exe",
+        @"C:\Program Files\LLVM\bin\clang.exe",
+    ];
 
     private static string? FindCompiler()
     {
@@ -47,6 +63,13 @@ public static class GccDriver
             proc?.WaitForExit();
             if (proc?.ExitCode == 0) return name;
         }
+
+        if (OperatingSystem.IsWindows())
+        {
+            foreach (var path in WindowsFallbackPaths)
+                if (File.Exists(path)) return path;
+        }
+
         return null;
     }
 
