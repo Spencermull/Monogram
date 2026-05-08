@@ -1,0 +1,27 @@
+{
+    "name": "vscode-monogram",
+    "displayName": "Monogram",
+    "description": "Monogram language support — syntax highlighting and diagnostics",
+    "version": "0.1.0",
+    "publisher": "monogram",
+    "engines": { "vscode": "^1.85.0" },
+    "categories": ["Programming Languages"],
+    "activationEvents": ["onLanguage:monogram"],
+    "main": "./extension.js",
+    "contributes": {
+        "languages": [{
+            "id": "monogram",
+            "aliases": ["Monogram"],
+            "extensions": [".mngrm"],
+            "configuration": "./language-config.json"
+        }],
+        "grammars": [{
+            "language": "monogram",
+            "scopeName": "source.monogram",
+            "path": "./syntaxes/monogram.tmLanguage.json"
+        }]
+    },
+    "dependencies": {
+        "vscode-languageclient": "^9.0.1"
+    }
+}

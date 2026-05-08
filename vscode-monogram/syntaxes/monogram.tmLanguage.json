@@ -1,0 +1,104 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Monogram",
+    "scopeName": "source.monogram",
+    "patterns": [
+        { "include": "#comments" },
+        { "include": "#imports" },
+        { "include": "#keywords" },
+        { "include": "#types" },
+        { "include": "#strings" },
+        { "include": "#numbers" },
+        { "include": "#operators" },
+        { "include": "#sigil" }
+    ],
+    "repository": {
+        "comments": {
+            "name": "comment.line.double-slash.monogram",
+            "match": "//.*$"
+        },
+        "imports": {
+            "match": "(#import<)([^>]*)(>)",
+            "captures": {
+                "1": { "name": "keyword.control.import.monogram" },
+                "2": { "name": "string.other.import-path.monogram" },
+                "3": { "name": "keyword.control.import.monogram" }
+            }
+        },
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.monogram",
+                    "match": "\\b(if|else|match|for|in)\\b"
+                },
+                {
+                    "name": "keyword.declaration.monogram",
+                    "match": "\\b(func|op|type|init)\\b"
+                },
+                {
+                    "name": "storage.modifier.monogram",
+                    "match": "\\b(const|volatile|transform)\\b"
+                },
+                {
+                    "name": "constant.language.boolean.monogram",
+                    "match": "\\b(true|false)\\b"
+                },
+                {
+                    "name": "keyword.type.void.monogram",
+                    "match": "\\bvoid\\b"
+                }
+            ]
+        },
+        "types": {
+            "name": "support.type.primitive.monogram",
+            "match": "\\b(int8|int16|int32|int64|uint8|uint16|uint32|uint64|int|float32|float64|float|char|byte|bool)\\b"
+        },
+        "strings": {
+            "name": "string.quoted.single.monogram",
+            "begin": "'",
+            "end": "'",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.monogram",
+                    "match": "\\\\[nrtf'\\\\]"
+                }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.hex.monogram",
+                    "match": "\\b0x[0-9A-Fa-f]+\\b"
+                },
+                {
+                    "name": "constant.numeric.float.monogram",
+                    "match": "\\b[0-9]+\\.[0-9]+\\b"
+                },
+                {
+                    "name": "constant.numeric.integer.monogram",
+                    "match": "\\b[0-9]+\\b"
+                }
+            ]
+        },
+        "operators": {
+            "patterns": [
+                {
+                    "name": "keyword.operator.arrow.monogram",
+                    "match": "->|=>"
+                },
+                {
+                    "name": "keyword.operator.logical.monogram",
+                    "match": "&&|\\|\\||==|!=|<=|>=|<<|>>"
+                },
+                {
+                    "name": "keyword.operator.memory.monogram",
+                    "match": "@|~"
+                }
+            ]
+        },
+        "sigil": {
+            "name": "punctuation.definition.sigil.monogram",
+            "match": ":"
+        }
+    }
+}
