@@ -16,7 +16,7 @@ public class TextDocumentHandler : TextDocumentSyncHandlerBase
     private readonly ILanguageServerFacade _facade;
     private readonly DocumentStore _store;
 
-    private static readonly TextDocumentSelector _selector = new(
+    public static readonly TextDocumentSelector Selector = new(
         new TextDocumentFilter { Language = "monogram", Pattern = "**/*.mngrm" }
     );
 
@@ -26,8 +26,7 @@ public class TextDocumentHandler : TextDocumentSyncHandlerBase
         _store  = store;
     }
 
-    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
-        => new(uri, "monogram");
+    public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) => new(uri, "monogram");
 
     public override Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken ct)
     {
@@ -94,7 +93,7 @@ public class TextDocumentHandler : TextDocumentSyncHandlerBase
         TextSynchronizationCapability capability,
         ClientCapabilities clientCapabilities) => new()
     {
-        DocumentSelector = _selector,
+        DocumentSelector = Selector,
         Change           = TextDocumentSyncKind.Full,
         Save             = new SaveOptions { IncludeText = false },
     };
