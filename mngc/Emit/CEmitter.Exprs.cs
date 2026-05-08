@@ -64,11 +64,25 @@ public partial class CEmitter
     {
         var left = EmitExpr(p.Left);
 
-        return p.Right switch
+        if (p.Right is CallExpr c)
         {
-            IdentifierExpr id => $"{id.Name}({left})",
-            CallExpr c        => $"{EmitExpr(c.Callee)}({left}{(c.Args.Count > 0 ? ", " + string.Join(", ", c.Args.Select(a => EmitExpr(a.Value))) : "")})",
-            _                 => $"/* pipeline */ {EmitExpr(p.Right)}({left})",
-        };
+            var allArgs = new[] { left }
+                .Concat(c.Args.Select(a => EmitExpr(a.Value)))
+                .ToList();
+
+            var qualName = TryGetQualifiedName(c.Callee);
+            if (qualName != null && StdlibMap.Entries.TryGetValue(qualName, out var entry))
+            {
+                _requiredHeaders.Add(entry.Header);
+                return entry.Emit(allArgs);
+            }
+
+            return $"{EmitExpr(c.Callee)}({string.Join(", ", allArgs)})";
+        }
+
+        if (p.Right is IdentifierExpr id)
+            return $"{id.Name}({left})";
+
+        return $"/* pipeline */ {EmitExpr(p.Right)}({left})";
     }
 }

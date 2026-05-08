@@ -38,10 +38,15 @@ public partial class CEmitter
             else _sb.AppendLine($"/* unresolved import: {imp.ModulePath}{(imp.Wildcard ? ".*" : "")} */");
         }
 
-        // Emit body — stdlib calls add to _requiredHeaders as they are encountered
+        // Types first so forward decls and main can reference them
+        foreach (var decl in program.Declarations.OfType<TypeDeclNode>())
+            EmitTypeDecl(decl);
+        if (program.Declarations.Any(d => d is TypeDeclNode))
+            _sb.AppendLine();
+
         EmitForwardDeclarations(program.Declarations);
         EmitEntryPoint(program.EntryPoint);
-        foreach (var decl in program.Declarations)
+        foreach (var decl in program.Declarations.Where(d => d is not TypeDeclNode))
             EmitStmt(decl);
 
         // Prepend collected headers, then body

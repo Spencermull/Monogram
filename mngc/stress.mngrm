@@ -1,0 +1,89 @@
+#import<std.math>
+#import<std.io>
+
+type Vec2 {
+    :x float32,
+    :y float32
+}
+
+func: make_vec(:x float32, :y float32) => Vec2 {
+    Vec2 v;
+    v.x = x;
+    v.y = y;
+    => v;
+}
+
+func: dot(:a Vec2, :b Vec2) => float32 {
+    => a.x * b.x + a.y * b.y;
+}
+
+func: magnitude(:v Vec2) => float32 {
+    => std.math.sqrt(:dot(:v, :v));
+}
+
+func: scale(:v Vec2, :s float32) => Vec2 {
+    => make_vec(:v.x * s, :v.y * s);
+}
+
+func: normalize(:v Vec2) => Vec2 {
+    float32 m = magnitude(:v);
+    => make_vec(:v.x / m, :v.y / m);
+}
+
+func: factorial(:n int) => int {
+    if (n <= 1) { => 1; }
+    => n * factorial(:n - 1);
+}
+
+func: fib(:n int) => int {
+    if (n <= 1) { => n; }
+    => fib(:n - 1) + fib(:n - 2);
+}
+
+func: grade(:score float32) => void {
+    if (score >= 90.0) { sys.stdout(:'A\n'); }
+    else if (score >= 80.0) { sys.stdout(:'B\n'); }
+    else if (score >= 70.0) { sys.stdout(:'C\n'); }
+    else { sys.stdout(:'F\n'); }
+}
+
+func: clamp(:val float32, :lo float32, :hi float32) => float32 {
+    if (val < lo) { => lo; }
+    if (val > hi) { => hi; }
+    => val;
+}
+
+init void main() {
+    Vec2 a = make_vec(:3.0, :4.0);
+    Vec2 b = make_vec(:1.0, :2.0);
+
+    sys.stdout(:'--- vectors ---\n');
+    float32 d = dot(:a, :b);
+    sys.stdout(:'dot(a,b)   = %.2f\n', d);
+    float32 m = magnitude(:a);
+    sys.stdout(:'|a|        = %.2f\n', m);
+    float32 sm = a -> scale(:2.0) -> magnitude();
+    sys.stdout(:'|a*2|      = %.2f\n', sm);
+    Vec2 n = normalize(:a);
+    float32 nm = magnitude(:n);
+    sys.stdout(:'|norm(a)|  = %.2f\n', nm);
+
+    sys.stdout(:'--- recursion ---\n');
+    sys.stdout(:'10!        = %d\n', factorial(:10));
+    sys.stdout(:'fib(12)    = %d\n', fib(:12));
+
+    sys.stdout(:'--- pipeline chain ---\n');
+    float32 val = a -> scale(:3.0) -> dot(:b) -> std.math.sqrt();
+    sys.stdout(:'sqrt(dot(a*3,b)) = %.4f\n', val);
+
+    sys.stdout(:'--- clamp ---\n');
+    sys.stdout(:'clamp(150,0,100) = %.1f\n', clamp(:150.0, :0.0, :100.0));
+    sys.stdout(:'clamp(-5,0,100)  = %.1f\n', clamp(:-5.0, :0.0, :100.0));
+    sys.stdout(:'clamp(42,0,100)  = %.1f\n', clamp(:42.0, :0.0, :100.0));
+
+    sys.stdout(:'--- grading ---\n');
+    grade(:95.0);
+    grade(:83.0);
+    grade(:71.0);
+    grade(:55.0);
+}

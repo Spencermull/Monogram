@@ -11,18 +11,26 @@ public partial class Parser
         while (Check(TokenType.Import))
             imports.Add(ParseImport());
 
-        var entry = ParseEntryPoint();
-
+        EntryPointNode? entry = null;
         var decls = new List<StmtNode>();
+
         while (!Check(TokenType.Eof))
-            decls.Add(ParseDeclaration());
+        {
+            if (Check(TokenType.Init))
+                entry = ParseEntryPoint();
+            else
+                decls.Add(ParseDeclaration());
+        }
+
+        if (entry == null)
+            throw new ParseException("no init entry point found", Current.Line, Current.Column);
 
         return new ProgramNode(imports, entry, decls);
     }
 
     private ImportNode ParseImport()
     {
-        Expect(TokenType.Import);           // consumes '#import<'
+        Expect(TokenType.Import);
         var path = new System.Text.StringBuilder();
         var wildcard = false;
 
