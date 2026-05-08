@@ -38,9 +38,25 @@ public partial class CEmitter
 
     private string EmitCall(CallExpr c)
     {
-        var args = string.Join(", ", c.Args.Select(a => EmitExpr(a.Value)));
-        return $"{EmitExpr(c.Callee)}({args})";
+        var args = c.Args.Select(a => EmitExpr(a.Value)).ToList();
+
+        var qualName = TryGetQualifiedName(c.Callee);
+        if (qualName != null && StdlibMap.Entries.TryGetValue(qualName, out var entry))
+        {
+            _requiredHeaders.Add(entry.Header);
+            return entry.Emit(args);
+        }
+
+        return $"{EmitExpr(c.Callee)}({string.Join(", ", args)})";
     }
+
+    // Flatten a member-access chain to a dotted string: sys.stdout, std.mem.alloc, etc.
+    private static string? TryGetQualifiedName(ExprNode expr) => expr switch
+    {
+        IdentifierExpr id => id.Name,
+        MemberAccessExpr m => TryGetQualifiedName(m.Object) is string obj ? $"{obj}.{m.Member}" : null,
+        _ => null,
+    };
 
     // a -> b        becomes  b(a)
     // a -> b(x, y)  becomes  b(a, x, y)  (left is prepended as first arg)

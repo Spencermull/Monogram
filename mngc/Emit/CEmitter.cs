@@ -5,6 +5,10 @@ namespace mngc.Emit;
 public partial class CEmitter
 {
     private readonly System.Text.StringBuilder _sb = new();
+    private readonly HashSet<string> _requiredHeaders = new()
+    {
+        "<stdint.h>", "<stdbool.h>", "<stddef.h>"
+    };
     private int _indent = 0;
     private const string Tab = "    ";
 
@@ -25,39 +29,36 @@ public partial class CEmitter
 
     public string Emit(ProgramNode program)
     {
-        EmitPreamble(program.Imports);
-        _sb.AppendLine();
+        // Seed headers from explicit imports
+        foreach (var imp in program.Imports)
+        {
+            var h = ResolveImport(imp.ModulePath, imp.Wildcard);
+            if (h != null) _requiredHeaders.Add(h);
+            else _sb.AppendLine($"/* unresolved import: {imp.ModulePath}{(imp.Wildcard ? ".*" : "")} */");
+        }
+
+        // Emit body — stdlib calls add to _requiredHeaders as they are encountered
         EmitForwardDeclarations(program.Declarations);
         EmitEntryPoint(program.EntryPoint);
         foreach (var decl in program.Declarations)
             EmitStmt(decl);
-        return _sb.ToString();
-    }
 
-    private void EmitPreamble(List<ImportNode> imports)
-    {
-        // Always needed for fixed-width types and bool
-        Line("#include <stdint.h>");
-        Line("#include <stdbool.h>");
-        Line("#include <stddef.h>");
+        // Prepend collected headers, then body
+        var headers = new System.Text.StringBuilder();
+        foreach (var h in _requiredHeaders.OrderBy(x => x))
+            headers.AppendLine($"#include {h}");
+        headers.AppendLine();
 
-        foreach (var imp in imports)
-        {
-            var header = ResolveImport(imp.ModulePath, imp.Wildcard);
-            if (header != null)
-                Line($"#include {header}");
-            else
-                Line($"/* unresolved import: {imp.ModulePath}{(imp.Wildcard ? ".*" : "")} */");
-        }
+        return headers.ToString() + _sb.ToString();
     }
 
     private static string? ResolveImport(string path, bool wildcard) => path switch
     {
-        "std.io"     or "std" when wildcard => "<stdio.h>",
-        "std.mem"                           => "<stdlib.h>",
-        "std.str"                           => "<string.h>",
-        "std.math"                          => "<math.h>",
-        _                                   => null,
+        "std.io"  or "std" when wildcard => "<stdio.h>",
+        "std.mem"                        => "<stdlib.h>",
+        "std.str"                        => "<string.h>",
+        "std.math"                       => "<math.h>",
+        _                                => null,
     };
 
     // Emit forward declarations for all functions so call order doesn't matter
@@ -67,7 +68,7 @@ public partial class CEmitter
         {
             if (decl is FuncDeclNode f)
             {
-                var ret = f.Return != null ? EmitTypeExpr(f.Return.Type) : "void";
+                var ret   = f.Return != null ? EmitTypeExpr(f.Return.Type) : "void";
                 var parms = string.Join(", ", f.Params.Select(p => $"{EmitTypeExpr(p.Type)} {p.Name}"));
                 Line($"{ret} {f.Name}({parms});");
             }
