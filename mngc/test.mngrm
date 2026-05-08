@@ -1,0 +1,27 @@
+#import<std.io>
+
+init void main() {
+    sys.stdout(:'=== Monogram v0.1 ===\n');
+
+    float32 celsius = 100.0;
+    float32 f = to_fahrenheit(:celsius);
+
+    sys.stdout(:'%.1f C = %.1f F\n', celsius, f);
+
+    if (f > 200.0) {
+        sys.stdout(:'status: boiling\n');
+    } else {
+        sys.stdout(:'status: not boiling\n');
+    }
+
+    int result = double_it(:7);
+    sys.stdout(:'double(7) = %d\n', result);
+}
+
+func: to_fahrenheit(:c float32) => float32 {
+    => c * 1.8 + 32.0;
+}
+
+func: double_it(:n int) => int {
+    => n * 2;
+}

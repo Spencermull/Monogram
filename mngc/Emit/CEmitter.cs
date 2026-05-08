@@ -55,7 +55,8 @@ public partial class CEmitter
 
     private static string? ResolveImport(string path, bool wildcard) => path switch
     {
-        "std.io"  or "std" when wildcard => "<stdio.h>",
+        "std.io"             => "<stdio.h>",
+        "std" when wildcard  => "<stdio.h>",
         "std.mem"                        => "<stdlib.h>",
         "std.str"                        => "<string.h>",
         "std.math"                       => "<math.h>",
