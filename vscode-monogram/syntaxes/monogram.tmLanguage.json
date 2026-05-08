@@ -5,8 +5,10 @@
     "patterns": [
         { "include": "#comments" },
         { "include": "#imports" },
+        { "include": "#func-decl" },
         { "include": "#keywords" },
         { "include": "#types" },
+        { "include": "#stdlib-calls" },
         { "include": "#strings" },
         { "include": "#numbers" },
         { "include": "#operators" },
@@ -25,15 +27,22 @@
                 "3": { "name": "keyword.control.import.monogram" }
             }
         },
+        "func-decl": {
+            "match": "(func:)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
+            "captures": {
+                "1": { "name": "keyword.declaration.monogram" },
+                "2": { "name": "entity.name.function.monogram" }
+            }
+        },
         "keywords": {
             "patterns": [
                 {
                     "name": "keyword.control.monogram",
-                    "match": "\\b(if|else|match|for|in)\\b"
+                    "match": "\\b(if|else|match|for|in|as)\\b"
                 },
                 {
                     "name": "keyword.declaration.monogram",
-                    "match": "\\b(func:|op:|type|init)\\b"
+                    "match": "\\b(op:|type|init)\\b"
                 },
                 {
                     "name": "storage.modifier.monogram",
@@ -44,14 +53,30 @@
                     "match": "\\b(true|false)\\b"
                 },
                 {
-                    "name": "keyword.type.void.monogram",
-                    "match": "\\bvoid\\b"
+                    "name": "variable.language.wildcard.monogram",
+                    "match": "\\b_\\b"
                 }
             ]
         },
         "types": {
-            "name": "support.type.primitive.monogram",
-            "match": "\\b(int8|int16|int32|int64|uint8|uint16|uint32|uint64|int|float32|float64|float|char|byte|bool)\\b"
+            "patterns": [
+                {
+                    "name": "support.type.primitive.monogram",
+                    "match": "\\b(int8|int16|int32|int64|uint8|uint16|uint32|uint64|int|float32|float64|float|char|byte|bool|void)\\b"
+                },
+                {
+                    "name": "support.type.builtin.monogram",
+                    "match": "\\b(node|lattice|process|slice)\\b"
+                }
+            ]
+        },
+        "stdlib-calls": {
+            "patterns": [
+                {
+                    "name": "support.function.stdlib.monogram",
+                    "match": "\\b(sys\\.stdout|sys\\.stderr|sys\\.exit|std\\.mem\\.alloc|std\\.mem\\.calloc|std\\.mem\\.realloc|std\\.mem\\.free|std\\.str\\.len|std\\.str\\.copy|std\\.str\\.cat|std\\.str\\.cmp|std\\.str\\.chr|std\\.str\\.fmt|std\\.math\\.sqrt|std\\.math\\.pow|std\\.math\\.abs|std\\.math\\.floor|std\\.math\\.ceil|std\\.math\\.sin|std\\.math\\.cos|std\\.math\\.tan|std\\.math\\.log|std\\.io\\.open|std\\.io\\.close|std\\.io\\.read|std\\.io\\.write|std\\.io\\.flush|std\\.io\\.scanf|node\\.new|node\\.link|node\\.get|node\\.set|node\\.next|node\\.prev|node\\.free|node\\.transform|lattice\\.new|lattice\\.new_transform|lattice\\.get|lattice\\.set|lattice\\.apply|lattice\\.rows|lattice\\.cols|lattice\\.free|slice\\.new|slice\\.get|slice\\.set|slice\\.len|slice\\.free|process\\.new|process\\.get|process\\.set|process\\.write|process\\.read|process\\.len|process\\.cap|process\\.free)\\b"
+                }
+            ]
         },
         "strings": {
             "name": "string.quoted.single.monogram",
