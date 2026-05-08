@@ -1,0 +1,233 @@
+/* ================================================
+   EBNF GRAMMAR
+   Monogram Programming Language
+   File Extension: .mngrm
+   Compiler: mngc
+   Version: 0.1 — based on ideation session
+   ================================================ */
+
+
+/* ------------------------------------------------
+   TOP LEVEL
+   ------------------------------------------------ */
+
+program         ::= import* entry_point declaration*
+
+import          ::= "#import<" module_path ">"
+module_path     ::= IDENTIFIER ("." IDENTIFIER)* ("*")?
+
+entry_point     ::= "init" "void" IDENTIFIER "(" ")" block
+
+declaration     ::= func_decl
+                  | op_decl
+                  | type_decl
+                  | var_decl
+                  | stmt
+
+
+/* ------------------------------------------------
+   FUNCTIONS
+   ------------------------------------------------ */
+
+func_decl       ::= "func" ":" IDENTIFIER generic_params? "(" param_list? ")" return_sig? block
+
+return_sig      ::= "=>" type_expr          /* regular return */
+                  | "->" type_expr          /* mapping/transform return */
+
+param_list      ::= param ("," param)*
+param           ::= ":" IDENTIFIER type_expr
+
+generic_params  ::= "<" IDENTIFIER ("," IDENTIFIER)* ">"
+
+
+/* ------------------------------------------------
+   OPERATOR DEFINITION
+   ------------------------------------------------ */
+
+op_decl         ::= "op" ":" IDENTIFIER "(" op_param_list ")" "=>" IDENTIFIER block
+
+op_param_list   ::= IDENTIFIER ("," IDENTIFIER)*
+
+
+/* ------------------------------------------------
+   TYPE DECLARATIONS
+   ------------------------------------------------ */
+
+type_decl       ::= "type" IDENTIFIER generic_params? type_body?
+
+type_body       ::= "{" field_list "}"          /* struct-like */
+                  | "(" type_expr "->" type_expr ")"  /* transformation type */
+                  | "[" "]"                     /* collection type */
+
+field_list      ::= field ("," field)*
+field           ::= ":" IDENTIFIER type_expr
+
+
+/* ------------------------------------------------
+   TYPE EXPRESSIONS
+   ------------------------------------------------ */
+
+type_expr       ::= primitive_type
+                  | IDENTIFIER generic_args?
+                  | type_expr "[" "]"           /* array/collection */
+                  | "(" type_expr "->" type_expr ")"  /* transform type */
+
+generic_args    ::= "<" type_arg ("," type_arg)* ">"
+type_arg        ::= type_expr
+                  | type_expr "->" type_expr    /* lattice transform arg */
+
+primitive_type  ::= "int8"  | "int16"  | "int32"  | "int64"
+                  | "uint8" | "uint16" | "uint32" | "uint64"
+                  | "int"
+                  | "float32" | "float64"
+                  | "float"
+                  | "char"
+                  | "byte"
+                  | "bool"
+                  | "void"
+
+
+/* ------------------------------------------------
+   VARIABLE DECLARATIONS
+   ------------------------------------------------ */
+
+var_decl        ::= mutability? type_expr IDENTIFIER ("=" expr)? ";"
+
+mutability      ::= "const"
+                  | "volatile"
+                  | "const" "volatile"
+
+
+/* ------------------------------------------------
+   STATEMENTS
+   ------------------------------------------------ */
+
+stmt            ::= var_decl
+                  | assign_stmt
+                  | if_stmt
+                  | match_stmt
+                  | for_stmt
+                  | return_stmt
+                  | expr_stmt
+                  | block
+
+block           ::= "{" stmt* "}"
+
+assign_stmt     ::= expr "=" expr ";"
+
+return_stmt     ::= "=>" expr ";"
+
+expr_stmt       ::= expr ";"
+
+
+/* ------------------------------------------------
+   CONDITIONALS
+   ------------------------------------------------ */
+
+if_stmt         ::= "if" "(" expr ")" block
+                    ("else" "if" "(" expr ")" block)*
+                    ("else" block)?
+
+match_stmt      ::= "match" ":" IDENTIFIER "{" match_arm* "}"
+
+match_arm       ::= (type_expr | "_") "=>" block
+
+
+/* ------------------------------------------------
+   FOR LOOPS — five forms
+   ------------------------------------------------ */
+
+for_stmt        ::= for_typed       /* typed stack/mapped operation */
+                  | for_map         /* mapped foreach over structure */
+                  | for_each        /* sequential foreach */
+                  | for_mapped_iter /* mapped iteration with condition */
+                  | for_iter        /* sequential iteration with condition */
+
+/* for -> type mod: x { } */
+for_typed       ::= "for" "->" "type" IDENTIFIER ":" IDENTIFIER block
+
+/* for -> :val in x { } */
+for_map         ::= "for" "->" ":" IDENTIFIER "in" expr block
+
+/* for :val in x { } */
+for_each        ::= "for" ":" IDENTIFIER "in" expr block
+
+/* for :i -> x >= 0; { } */
+for_mapped_iter ::= "for" ":" IDENTIFIER "->" expr condition ";" block
+
+/* for :i in x >= 0; { } */
+for_iter        ::= "for" ":" IDENTIFIER "in" expr condition ";" block
+
+condition       ::= ">=" expr | "<=" expr | ">" expr | "<" expr
+                  | "==" expr | "!=" expr
+
+
+/* ------------------------------------------------
+   EXPRESSIONS
+   ------------------------------------------------ */
+
+expr            ::= ternary_expr
+
+ternary_expr    ::= logic_expr ("?" expr ":" expr)?
+
+logic_expr      ::= compare_expr (("&&" | "||") compare_expr)*
+
+compare_expr    ::= shift_expr (("==" | "!=" | ">=" | "<=" | ">" | "<") shift_expr)*
+
+shift_expr      ::= add_expr (("<<" | ">>") add_expr)*
+
+add_expr        ::= mul_expr (("+" | "-") mul_expr)*
+
+mul_expr        ::= unary_expr (("*" | "/" | "%") unary_expr)*
+
+unary_expr      ::= "@" unary_expr       /* address-of */
+                  | "~" unary_expr       /* dereference */
+                  | "!" unary_expr       /* logical not */
+                  | "-" unary_expr       /* negation */
+                  | map_expr
+
+map_expr        ::= postfix_expr ("->" postfix_expr)*   /* transform/pipeline */
+
+postfix_expr    ::= primary_expr
+                  | postfix_expr "." IDENTIFIER         /* member access */
+                  | postfix_expr "(" arg_list? ")"      /* call */
+                  | postfix_expr "[" expr "]"           /* index */
+                  | postfix_expr "." "transform"        /* transform chain */
+
+primary_expr    ::= IDENTIFIER
+                  | literal
+                  | "(" expr ")"
+                  | ":" IDENTIFIER                      /* binding sigil */
+
+arg_list        ::= arg ("," arg)*
+arg             ::= ":" expr                            /* sigil argument */
+                  | expr                               /* plain argument */
+
+
+/* ------------------------------------------------
+   LITERALS
+   ------------------------------------------------ */
+
+literal         ::= INT_LIT
+                  | HEX_LIT
+                  | FLOAT_LIT
+                  | CHAR_LIT
+                  | STRING_LIT
+                  | BOOL_LIT
+
+INT_LIT         ::= [0-9]+
+HEX_LIT         ::= "0x" [0-9A-Fa-f]+
+FLOAT_LIT       ::= [0-9]+ "." [0-9]+
+CHAR_LIT        ::= "'" . "'"
+STRING_LIT      ::= "'" [^']* "'"
+BOOL_LIT        ::= "true" | "false"
+
+
+/* ------------------------------------------------
+   IDENTIFIERS AND WHITESPACE
+   ------------------------------------------------ */
+
+IDENTIFIER      ::= [a-zA-Z_] [a-zA-Z0-9_]*
+
+WHITESPACE      ::= [ \t\n\r]+   /* ignored */
+COMMENT         ::= "//" [^\n]*  /* single line, ignored */
