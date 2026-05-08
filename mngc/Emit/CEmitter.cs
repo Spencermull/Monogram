@@ -9,6 +9,7 @@ public partial class CEmitter
     {
         "<stdint.h>", "<stdbool.h>", "<stddef.h>"
     };
+    public IReadOnlySet<string> RequiredHeaders => _requiredHeaders;
     private int _indent = 0;
     private const string Tab = "    ";
 
