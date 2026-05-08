@@ -79,6 +79,7 @@ public partial class CEmitter
         "node"              => "node",      // inline module
         "lattice"           => "lattice",   // inline module
         "process"           => "process",   // inline module
+        "slice"             => "slice",     // inline module
         _                   => null,
     };
 
