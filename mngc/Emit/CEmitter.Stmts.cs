@@ -85,10 +85,10 @@ public partial class CEmitter
     private void EmitForEach(ForEachStmt f)
     {
         var coll = EmitExpr(f.Collection);
-        Line($"for (size_t _i = 0; /* TODO: _i < len({coll}) */ ; _i++)");
+        Line($"for (size_t _i = 0; _i < {coll}->len; _i++)");
         Line("{");
         Push();
-        Line($"/* {f.VarName} = {coll}[_i] */");
+        Line($"uintptr_t {f.VarName} = {coll}->data[_i];");
         foreach (var s in f.Body.Stmts) EmitStmt(s);
         Pop();
         Line("}");
@@ -97,11 +97,11 @@ public partial class CEmitter
     private void EmitForMap(ForMapStmt f)
     {
         var coll = EmitExpr(f.Collection);
-        Line($"/* mapped (parallel) foreach — emitted as sequential */");
-        Line($"for (size_t _i = 0; /* TODO: _i < len({coll}) */ ; _i++)");
+        Line($"/* mapped foreach — emitted as sequential */");
+        Line($"for (size_t _i = 0; _i < {coll}->len; _i++)");
         Line("{");
         Push();
-        Line($"/* {f.VarName} = {coll}[_i] */");
+        Line($"uintptr_t {f.VarName} = {coll}->data[_i];");
         foreach (var s in f.Body.Stmts) EmitStmt(s);
         Pop();
         Line("}");

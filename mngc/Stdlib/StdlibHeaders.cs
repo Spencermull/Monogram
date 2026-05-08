@@ -59,15 +59,16 @@ static inline size_t lattice_cols(mglattice_t* l) { return l ? l->cols : 0; }
 static inline void   lattice_free(mglattice_t* l) { if (l) { free(l->data); free(l); } }";
 
     public const string Slice = @"#include <stdlib.h>
-typedef struct { void** data; size_t len; size_t cap; } mgslice_t;
+#include <stdint.h>
+typedef struct { uintptr_t* data; size_t len; size_t cap; } mgslice_t;
 static inline mgslice_t* slice_new(size_t n) {
     mgslice_t* s = (mgslice_t*)malloc(sizeof(mgslice_t));
-    s->data = (void**)calloc(n, sizeof(void*)); s->len = n; s->cap = n; return s;
+    s->data = (uintptr_t*)calloc(n, sizeof(uintptr_t)); s->len = n; s->cap = n; return s;
 }
-static inline void*  slice_get(mgslice_t* s, size_t i) { return (s && i < s->len) ? s->data[i] : NULL; }
-static inline void   slice_set(mgslice_t* s, size_t i, void* v) { if (s && i < s->len) s->data[i] = v; }
-static inline size_t slice_len(mgslice_t* s) { return s ? s->len : 0; }
-static inline void   slice_free(mgslice_t* s) { if (s) { free(s->data); free(s); } }";
+static inline uintptr_t slice_get(mgslice_t* s, size_t i) { return (s && i < s->len) ? s->data[i] : 0; }
+static inline void      slice_set(mgslice_t* s, size_t i, uintptr_t v) { if (s && i < s->len) s->data[i] = v; }
+static inline size_t    slice_len(mgslice_t* s) { return s ? s->len : 0; }
+static inline void      slice_free(mgslice_t* s) { if (s) { free(s->data); free(s); } }";
 
     public const string Process = @"#include <stdlib.h>
 #include <string.h>
