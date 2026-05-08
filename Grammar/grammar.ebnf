@@ -193,6 +193,7 @@ postfix_expr    ::= primary_expr
                   | postfix_expr "(" arg_list? ")"      /* call */
                   | postfix_expr "[" expr "]"           /* index */
                   | postfix_expr "." "transform"        /* transform chain */
+                  | postfix_expr "as" type_expr         /* type cast */
 
 primary_expr    ::= IDENTIFIER
                   | literal

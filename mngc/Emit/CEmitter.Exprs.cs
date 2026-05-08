@@ -18,6 +18,7 @@ public partial class CEmitter
         TransformChainExpr tc => $"{EmitExpr(tc.Object)}",     // .transform stripped
         CallExpr c            => EmitCall(c),
         PipelineExpr p        => EmitPipeline(p),
+        CastExpr c            => $"({EmitTypeExpr(c.TargetType)}){EmitExpr(c.Operand)}",
         _                     => $"/* unknown expr: {expr.GetType().Name} */",
     };
 

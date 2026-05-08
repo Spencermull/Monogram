@@ -132,6 +132,12 @@ public partial class Parser
                 Expect(TokenType.RBracket);
                 expr = new IndexExpr(expr, index);
             }
+            else if (Check(TokenType.As))
+            {
+                Advance();
+                var targetType = ParseTypeExpr();
+                expr = new CastExpr(targetType, expr);
+            }
             else break;
         }
 

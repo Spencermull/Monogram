@@ -24,6 +24,7 @@ public enum TokenType
     Match,
     For,
     In,
+    As,
     True,
     False,
     Void,

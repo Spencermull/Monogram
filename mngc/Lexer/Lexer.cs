@@ -37,6 +37,7 @@ public class Lexer
         new(TokenType.For,       @"^for\b"),
         new(TokenType.If,        @"^if\b"),
         new(TokenType.In,        @"^in\b"),
+        new(TokenType.As,        @"^as\b"),
         new(TokenType.Op,        @"^op:"),
         new(TokenType.Void,      @"^void\b"),
         new(TokenType.True,      @"^true\b"),
