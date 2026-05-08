@@ -7,8 +7,8 @@ if (args.Length == 0)
 }
 
 var source = File.ReadAllText(args[0]);
-var lexer = new Lexer(source);
-var tokens = lexer.Tokenize();
+var lexer = new Lexer();
+var tokens = lexer.Tokenize(source);
 
 foreach (var token in tokens)
     Console.WriteLine(token);

@@ -8,7 +8,6 @@ public enum TokenType
     FloatLit,
     CharLit,
     StringLit,
-    BoolLit,
 
     // Identifiers & keywords
     Identifier,
@@ -19,6 +18,7 @@ public enum TokenType
     Type,
     Const,
     Volatile,
+    Transform,
     If,
     Else,
     Match,
@@ -75,5 +75,6 @@ public enum TokenType
     Question,  // ?
 
     // Meta
+    Invalid,
     Eof,
 }
