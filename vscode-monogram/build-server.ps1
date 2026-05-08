@@ -1,16 +1,18 @@
-# Publishes monogram-lsp into vscode-monogram/server/ so the extension can find it.
-# Run this once after cloning, and again whenever the language server changes.
+# Publishes monogram-lsp and mngc into vscode-monogram/ so the extension can find them.
+# Run this once after cloning, and again whenever either project changes.
 
-$root      = Split-Path -Parent $PSScriptRoot
-$lspProj   = Join-Path $root "monogram-lsp" "monogram-lsp.csproj"
-$outputDir = Join-Path $PSScriptRoot "server"
+$root        = Split-Path -Parent $PSScriptRoot
+$lspProj     = Join-Path $root "monogram-lsp" "monogram-lsp.csproj"
+$compilerProj = Join-Path $root "mngc" "mngc.csproj"
+$serverDir   = Join-Path $PSScriptRoot "server"
+$compilerDir = Join-Path $PSScriptRoot "compiler"
 
 Write-Host "Building monogram-lsp..."
-dotnet publish $lspProj -c Release -o $outputDir --self-contained false /nologo
+dotnet publish $lspProj -c Release -o $serverDir --self-contained false /nologo
+if ($LASTEXITCODE -ne 0) { Write-Error "LSP build failed."; exit 1 }
 
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Server published to $outputDir"
-    Write-Host "Reload VS Code to activate the language server."
-} else {
-    Write-Error "Build failed."
-}
+Write-Host "Building mngc..."
+dotnet publish $compilerProj -c Release -o $compilerDir --self-contained false /nologo
+if ($LASTEXITCODE -ne 0) { Write-Error "Compiler build failed."; exit 1 }
+
+Write-Host "Done. Reload VS Code to activate."

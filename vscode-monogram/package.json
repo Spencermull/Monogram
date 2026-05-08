@@ -9,6 +9,15 @@
     "activationEvents": ["onLanguage:monogram"],
     "main": "./extension.js",
     "contributes": {
+        "commands": [{
+            "command": "monogram.runFile",
+            "title": "Monogram: Run File"
+        }],
+        "keybindings": [{
+            "command": "monogram.runFile",
+            "key": "f5",
+            "when": "resourceLangId == monogram"
+        }],
         "languages": [{
             "id": "monogram",
             "aliases": ["Monogram"],
