@@ -64,6 +64,13 @@ public static class StdlibMap
         ["lattice.cols"]          = new("lattice", args => $"lattice_cols({args[0]})"),
         ["lattice.free"]          = new("lattice", args => $"lattice_free({args[0]})"),
 
+        // slice — length-tracked array
+        ["slice.new"]   = new("slice", args => $"slice_new({args[0]})"),
+        ["slice.get"]   = new("slice", args => $"slice_get({args[0]}, {args[1]})"),
+        ["slice.set"]   = new("slice", args => $"slice_set({args[0]}, {args[1]}, {args[2]})"),
+        ["slice.len"]   = new("slice", args => $"slice_len({args[0]})"),
+        ["slice.free"]  = new("slice", args => $"slice_free({args[0]})"),
+
         // process — byte buffer pool
         ["process.new"]     = new("process", args => $"process_new({args[0]})"),
         ["process.get"]     = new("process", args => $"process_get({args[0]}, {args[1]})"),
