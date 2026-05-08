@@ -175,7 +175,11 @@ ternary_expr    ::= logic_expr ("?" expr ":" expr)?
 
 logic_expr      ::= compare_expr (("&&" | "||") compare_expr)*
 
-compare_expr    ::= shift_expr (("==" | "!=" | ">=" | "<=" | ">" | "<") shift_expr)*
+compare_expr    ::= bitor_expr (("==" | "!=" | ">=" | "<=" | ">" | "<") bitor_expr)*
+
+bitor_expr      ::= bitxor_expr ("|" bitxor_expr)*
+bitxor_expr     ::= bitand_expr ("^" bitand_expr)*
+bitand_expr     ::= shift_expr  ("&" shift_expr)*
 
 shift_expr      ::= add_expr (("<<" | ">>") add_expr)*
 

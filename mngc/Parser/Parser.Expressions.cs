@@ -30,8 +30,41 @@ public partial class Parser
 
     private ExprNode ParseCompare()
     {
-        var left = ParseShift();
+        var left = ParseBitOr();
         while (CheckAny(TokenType.Eq, TokenType.Neq, TokenType.Gte, TokenType.Lte, TokenType.RAngle, TokenType.LAngle))
+        {
+            var op = Advance().Value;
+            left = new BinaryExpr(left, op, ParseBitOr());
+        }
+        return left;
+    }
+
+    private ExprNode ParseBitOr()
+    {
+        var left = ParseBitXor();
+        while (Check(TokenType.Pipe))
+        {
+            var op = Advance().Value;
+            left = new BinaryExpr(left, op, ParseBitXor());
+        }
+        return left;
+    }
+
+    private ExprNode ParseBitXor()
+    {
+        var left = ParseBitAnd();
+        while (Check(TokenType.Caret))
+        {
+            var op = Advance().Value;
+            left = new BinaryExpr(left, op, ParseBitAnd());
+        }
+        return left;
+    }
+
+    private ExprNode ParseBitAnd()
+    {
+        var left = ParseShift();
+        while (Check(TokenType.Ampersand))
         {
             var op = Advance().Value;
             left = new BinaryExpr(left, op, ParseShift());

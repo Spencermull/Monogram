@@ -73,6 +73,9 @@ public enum TokenType
     Gte,       // >=
     Shl,       // <<
     Shr,       // >>
+    Caret,     // ^  (bitwise XOR)
+    Ampersand, // &  (bitwise AND)
+    Pipe,      // |  (bitwise OR)
     Question,  // ?
 
     // Meta
