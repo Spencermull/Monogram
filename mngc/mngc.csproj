@@ -5,6 +5,10 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>mono</ToolCommandName>
+    <PackageId>Monogram.Compiler</PackageId>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
 </Project>

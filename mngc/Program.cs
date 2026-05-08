@@ -1,57 +1,108 @@
-﻿using mngc.Driver;
+using System.Diagnostics;
+using mngc.Driver;
 using mngc.Emit;
 using mngc.Lexer;
 using mngc.Parser;
 
-if (args.Length == 0)
+if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
 {
-    Console.Error.WriteLine("usage: mngc <file.mngrm> [-o <output>] [--keep-c]");
-    return 1;
+    PrintHelp();
+    return 0;
 }
 
-var inputPath  = args[0];
-var outputPath = GccDriver.DefaultOutputPath(inputPath);
-var keepC      = false;
-
-for (int i = 1; i < args.Length; i++)
+return args[0] switch
 {
-    if (args[i] == "-o" && i + 1 < args.Length) outputPath = args[++i];
-    else if (args[i] == "--keep-c") keepC = true;
-}
+    "build" => RunBuild(args[1..], run: false),
+    "run"   => RunBuild(args[1..], run: true),
+    _       => UnknownCommand(args[0])
+};
 
-var cPath = Path.ChangeExtension(inputPath, ".c");
-
-try
+static int RunBuild(string[] args, bool run)
 {
-    var source  = File.ReadAllText(inputPath);
-    var tokens  = new Lexer().Tokenize(source);
-    var ast     = new Parser(tokens).Parse();
-    var emitter = new CEmitter();
-    var cSource = emitter.Emit(ast);
-
-    File.WriteAllText(cPath, cSource);
-
-    var result = GccDriver.Compile(
-        cPath,
-        outputPath,
-        needsMath: emitter.RequiredHeaders.Contains("<math.h>")
-    );
-
-    if (!result.Success)
+    if (args.Length == 0)
     {
-        Console.Error.WriteLine("compile error:");
-        Console.Error.WriteLine(result.Errors);
+        Console.Error.WriteLine($"usage: mono {(run ? "run" : "build")} <file.mngrm> [-o <output>] [--keep-c]");
         return 1;
     }
 
-    Console.WriteLine($"compiled {inputPath} -> {outputPath}");
+    var inputPath  = args[0];
+    var outputPath = GccDriver.DefaultOutputPath(inputPath);
+    var keepC      = false;
 
-    if (!keepC) File.Delete(cPath);
+    for (int i = 1; i < args.Length; i++)
+    {
+        if (args[i] == "-o" && i + 1 < args.Length) outputPath = args[++i];
+        else if (args[i] == "--keep-c") keepC = true;
+    }
+
+    var cPath = Path.ChangeExtension(inputPath, ".c");
+
+    try
+    {
+        var source  = File.ReadAllText(inputPath);
+        var tokens  = new Lexer().Tokenize(source);
+        var ast     = new Parser(tokens).Parse();
+        var emitter = new CEmitter();
+        var cSource = emitter.Emit(ast);
+
+        File.WriteAllText(cPath, cSource);
+
+        var result = GccDriver.Compile(
+            cPath,
+            outputPath,
+            needsMath: emitter.RequiredHeaders.Contains("<math.h>")
+        );
+
+        if (!keepC) File.Delete(cPath);
+
+        if (!result.Success)
+        {
+            Console.Error.WriteLine("compile error:");
+            Console.Error.WriteLine(result.Errors);
+            return 1;
+        }
+
+        if (!run)
+        {
+            Console.WriteLine($"built {inputPath} -> {outputPath}");
+            return 0;
+        }
+
+        var proc = Process.Start(new ProcessStartInfo
+        {
+            FileName  = outputPath,
+            UseShellExecute = false,
+        });
+        proc!.WaitForExit();
+        return proc.ExitCode;
+    }
+    catch (ParseException ex)
+    {
+        Console.Error.WriteLine($"parse error: {ex.Message}");
+        return 1;
+    }
+    catch (FileNotFoundException)
+    {
+        Console.Error.WriteLine($"error: file not found: {inputPath}");
+        return 1;
+    }
 }
-catch (ParseException ex)
+
+static void PrintHelp()
 {
-    Console.Error.WriteLine($"parse error: {ex.Message}");
+    Console.WriteLine("mono — Monogram compiler v0.1.0");
+    Console.WriteLine();
+    Console.WriteLine("commands:");
+    Console.WriteLine("  mono run   <file.mngrm>              compile and run");
+    Console.WriteLine("  mono build <file.mngrm> [-o output]  compile only");
+    Console.WriteLine();
+    Console.WriteLine("flags:");
+    Console.WriteLine("  -o <path>   output binary path");
+    Console.WriteLine("  --keep-c    keep generated C file");
+}
+
+static int UnknownCommand(string cmd)
+{
+    Console.Error.WriteLine($"error: unknown command '{cmd}'. Run 'mono help' for usage.");
     return 1;
 }
-
-return 0;
