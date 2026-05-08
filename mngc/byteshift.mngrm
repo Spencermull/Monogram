@@ -1,0 +1,99 @@
+#import<std.io>
+#import<node>
+#import<process>
+
+// Print each byte in the buffer
+func: print_buf(:buf process[], :i int, :len int) => void {
+    if (i < len) {
+        sys.stdout(:'%3d', process.get(:buf, :i));
+        print_buf(:buf, :i + 1, :len);
+    }
+    if (i == len) { sys.stdout(:'\n'); }
+}
+
+// Rotate bytes left by 1: [A B C D E] -> [B C D E A]
+func: shift_left(:buf process[], :len int) => void {
+    byte head = process.get(:buf, :0);
+    shift_left_step(:buf, :1, :len, :head);
+}
+
+func: shift_left_step(:buf process[], :i int, :len int, :head byte) => void {
+    if (i < len) {
+        byte next = process.get(:buf, :i);
+        process.set(:buf, :i - 1, :next);
+        shift_left_step(:buf, :i + 1, :len, :head);
+    }
+    if (i == len) {
+        process.set(:buf, :len - 1, :head);
+    }
+}
+
+// Rotate bytes right by 1: [A B C D E] -> [E A B C D]
+func: shift_right(:buf process[], :len int) => void {
+    byte tail = process.get(:buf, :len - 1);
+    shift_right_step(:buf, :len - 2, :tail);
+}
+
+func: shift_right_step(:buf process[], :i int, :tail byte) => void {
+    if (i >= 0) {
+        byte cur = process.get(:buf, :i);
+        process.set(:buf, :i + 1, :cur);
+        shift_right_step(:buf, :i - 1, :tail);
+    }
+    if (i == -1) {
+        process.set(:buf, :0, :tail);
+    }
+}
+
+init void main() {
+    // 5-node linked list — each node marks one slot in the buffer
+    int s0 = 0;
+    int s1 = 1;
+    int s2 = 2;
+    int s3 = 3;
+    int s4 = 4;
+
+    node<int> n0 = node.new(:@s0);
+    node<int> n1 = node.new(:@s1);
+    node<int> n2 = node.new(:@s2);
+    node<int> n3 = node.new(:@s3);
+    node<int> n4 = node.new(:@s4);
+    node.link(:n0, :n1);
+    node.link(:n1, :n2);
+    node.link(:n2, :n3);
+    node.link(:n3, :n4);
+
+    // byte buffer backing the list
+    process[] data = process.new(:5);
+    process.set(:data, :0, :10);
+    process.set(:data, :1, :20);
+    process.set(:data, :2, :30);
+    process.set(:data, :3, :40);
+    process.set(:data, :4, :50);
+
+    sys.stdout(:'initial:      ');
+    print_buf(:data, :0, :5);
+
+    shift_left(:data, :5);
+    sys.stdout(:'shift left 1: ');
+    print_buf(:data, :0, :5);
+
+    shift_left(:data, :5);
+    sys.stdout(:'shift left 2: ');
+    print_buf(:data, :0, :5);
+
+    shift_right(:data, :5);
+    sys.stdout(:'shift right:  ');
+    print_buf(:data, :0, :5);
+
+    // verify list structure is intact
+    sys.stdout(:'n0->next==n1: %d\n', node.next(:n0) == n1);
+    sys.stdout(:'n4->prev==n3: %d\n', node.prev(:n4) == n3);
+
+    node.free(:n0);
+    node.free(:n1);
+    node.free(:n2);
+    node.free(:n3);
+    node.free(:n4);
+    process.free(:data);
+}
