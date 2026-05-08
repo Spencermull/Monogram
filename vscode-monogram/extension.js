@@ -52,7 +52,7 @@ function activate(context) {
             runTerminal = vscode.window.createTerminal('Monogram');
         }
         runTerminal.show(true);
-        runTerminal.sendText(`dotnet "${compilerDll}" "${filePath}"`);
+        runTerminal.sendText(`dotnet "${compilerDll}" run "${filePath}"`);
     });
 
     context.subscriptions.push(runCmd);
