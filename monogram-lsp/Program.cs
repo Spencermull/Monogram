@@ -14,6 +14,7 @@ var server = await LanguageServer.From(options => options
     .WithServices(s => s.AddSingleton<DocumentStore>())
     .WithHandler<TextDocumentHandler>()
     .WithHandler<CompletionHandler>()
+    .WithHandler<HoverHandler>()
 );
 
 await server.WaitForExit;
