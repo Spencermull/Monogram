@@ -1,0 +1,46 @@
+#import<std.io>
+#import<node>
+#import<lattice>
+#import<process>
+
+init void main() {
+    // --- node<T>: linked list ---
+    sys.stdout(:'--- node ---\n');
+    int va = 10;
+    int vb = 20;
+    int vc = 30;
+    node<int> a = node.new(:@va);
+    node<int> b = node.new(:@vb);
+    node<int> c = node.new(:@vc);
+    node.link(:a, :b);
+    node.link(:b, :c);
+    sys.stdout(:'a->next == b: %d\n', node.next(:a) == b);
+    sys.stdout(:'b->next == c: %d\n', node.next(:b) == c);
+    sys.stdout(:'c->prev == b: %d\n', node.prev(:c) == b);
+    node.free(:a);
+    node.free(:b);
+    node.free(:c);
+
+    // --- lattice<X,Y>: 2D grid ---
+    sys.stdout(:'--- lattice ---\n');
+    int cell = 42;
+    lattice<int, int> grid = lattice.new(:3, :3);
+    lattice.set(:grid, :1, :1, :@cell);
+    sys.stdout(:'grid[1][1] set: %d\n', lattice.get(:grid, :1, :1) == @cell);
+    sys.stdout(:'grid[0][0] empty: %d\n', lattice.get(:grid, :0, :0) == 0);
+    sys.stdout(:'rows=%zu cols=%zu\n', lattice.rows(:grid), lattice.cols(:grid));
+    lattice.free(:grid);
+
+    // --- process[]: byte buffer ---
+    sys.stdout(:'--- process ---\n');
+    process[] buf = process.new(:8);
+    process.set(:buf, :0, :65);
+    process.set(:buf, :1, :66);
+    process.set(:buf, :2, :67);
+    sys.stdout(:'bytes: %d %d %d\n',
+        process.get(:buf, :0),
+        process.get(:buf, :1),
+        process.get(:buf, :2));
+    sys.stdout(:'len=%zu cap=%zu\n', process.len(:buf), process.cap(:buf));
+    process.free(:buf);
+}

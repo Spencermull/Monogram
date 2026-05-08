@@ -43,6 +43,36 @@ public static class StdlibMap
         ["std.io.write"]    = new("<stdio.h>",   args => $"fputs({args[0]}, {args[1]})"),
         ["std.io.flush"]    = new("<stdio.h>",   args => $"fflush({args[0]})"),
         ["std.io.scanf"]    = new("<stdio.h>",   args => $"scanf({Join(args)})"),
+
+        // node — linked / graph node
+        ["node.new"]        = new("node", args => $"node_new({args[0]})"),
+        ["node.link"]       = new("node", args => $"node_link({args[0]}, {args[1]})"),
+        ["node.get"]        = new("node", args => $"node_get({args[0]})"),
+        ["node.set"]        = new("node", args => $"node_set({args[0]}, {args[1]})"),
+        ["node.next"]       = new("node", args => $"node_next({args[0]})"),
+        ["node.prev"]       = new("node", args => $"node_prev({args[0]})"),
+        ["node.free"]       = new("node", args => $"node_free({args[0]})"),
+        ["node.transform"]  = new("node", args => $"node_transform({args[0]}, {args[1]})"),
+
+        // lattice — 2D data grid
+        ["lattice.new"]           = new("lattice", args => $"lattice_new({args[0]}, {args[1]})"),
+        ["lattice.new_transform"] = new("lattice", args => $"lattice_new_transform({args[0]}, {args[1]}, {args[2]})"),
+        ["lattice.get"]           = new("lattice", args => $"lattice_get({args[0]}, {args[1]}, {args[2]})"),
+        ["lattice.set"]           = new("lattice", args => $"lattice_set({args[0]}, {args[1]}, {args[2]}, {args[3]})"),
+        ["lattice.apply"]         = new("lattice", args => $"lattice_apply({args[0]}, {args[1]}, {args[2]})"),
+        ["lattice.rows"]          = new("lattice", args => $"lattice_rows({args[0]})"),
+        ["lattice.cols"]          = new("lattice", args => $"lattice_cols({args[0]})"),
+        ["lattice.free"]          = new("lattice", args => $"lattice_free({args[0]})"),
+
+        // process — byte buffer pool
+        ["process.new"]     = new("process", args => $"process_new({args[0]})"),
+        ["process.get"]     = new("process", args => $"process_get({args[0]}, {args[1]})"),
+        ["process.set"]     = new("process", args => $"process_set({args[0]}, {args[1]}, {args[2]})"),
+        ["process.write"]   = new("process", args => $"process_write({args[0]}, {args[1]}, {args[2]}, {args[3]})"),
+        ["process.read"]    = new("process", args => $"process_read({args[0]}, {args[1]}, {args[2]}, {args[3]})"),
+        ["process.len"]     = new("process", args => $"process_len({args[0]})"),
+        ["process.cap"]     = new("process", args => $"process_cap({args[0]})"),
+        ["process.free"]    = new("process", args => $"process_free({args[0]})"),
     };
 
     private static string Join(List<string> args) => string.Join(", ", args);

@@ -6,7 +6,13 @@ public partial class CEmitter
 {
     private string EmitTypeExpr(TypeNode type) => type switch
     {
-        PrimitiveTypeNode p  => MapPrimitive(p.Name),
+        PrimitiveTypeNode p                                                  => MapPrimitive(p.Name),
+        // stdlib types — generic params are erased to void* in C
+        NamedTypeNode { Name: "node", GenericArgs: { Count: >= 2 } }        => "mgnode_xform_t*",
+        NamedTypeNode { Name: "node" }                                       => "mgnode_t*",
+        NamedTypeNode { Name: "lattice" }                                    => "mglattice_t*",
+        ArrayTypeNode { ElementType: NamedTypeNode { Name: "process" } }     => "mgprocess_t*",
+        // general
         NamedTypeNode n      => n.GenericArgs.Count == 0
                                     ? n.Name
                                     : $"{n.Name}/* <{string.Join(", ", n.GenericArgs.Select(EmitTypeExpr))}> */",

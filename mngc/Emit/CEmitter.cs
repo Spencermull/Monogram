@@ -1,4 +1,5 @@
 using mngc.AST;
+using mngc.Stdlib;
 
 namespace mngc.Emit;
 
@@ -49,23 +50,36 @@ public partial class CEmitter
         foreach (var decl in program.Declarations.Where(d => d is not TypeDeclNode))
             EmitStmt(decl);
 
-        // Prepend collected headers, then body
+        // Prepend headers then body.
+        // _requiredHeaders entries starting with '<' or '"' are system/local includes.
+        // All other entries are inline module names (node, lattice, process).
         var headers = new System.Text.StringBuilder();
-        foreach (var h in _requiredHeaders.OrderBy(x => x))
+        foreach (var h in _requiredHeaders.Where(h => h.StartsWith('<') || h.StartsWith('"')).OrderBy(x => x))
             headers.AppendLine($"#include {h}");
         headers.AppendLine();
+        foreach (var module in _requiredHeaders.Where(h => !h.StartsWith('<') && !h.StartsWith('"')).OrderBy(x => x))
+        {
+            if (StdlibHeaders.All.TryGetValue(module, out var content))
+            {
+                headers.AppendLine(content);
+                headers.AppendLine();
+            }
+        }
 
         return headers.ToString() + _sb.ToString();
     }
 
     private static string? ResolveImport(string path, bool wildcard) => path switch
     {
-        "std.io"             => "<stdio.h>",
-        "std" when wildcard  => "<stdio.h>",
-        "std.mem"                        => "<stdlib.h>",
-        "std.str"                        => "<string.h>",
-        "std.math"                       => "<math.h>",
-        _                                => null,
+        "std.io"            => "<stdio.h>",
+        "std" when wildcard => "<stdio.h>",
+        "std.mem"           => "<stdlib.h>",
+        "std.str"           => "<string.h>",
+        "std.math"          => "<math.h>",
+        "node"              => "node",      // inline module
+        "lattice"           => "lattice",   // inline module
+        "process"           => "process",   // inline module
+        _                   => null,
     };
 
     // Emit forward declarations for all functions so call order doesn't matter
