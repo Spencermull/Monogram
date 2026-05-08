@@ -1,0 +1,78 @@
+// processor.mngrm
+// Byte-stream XOR cipher processor.
+// Demonstrates: slice iteration, pipeline operator, casting, functions.
+
+#import<std.io>
+#import<slice>
+
+func: xor_byte(:b int, :key int) => int {
+    => b ^ key;
+}
+
+func: clamp_print(:b int) => int {
+    if (b < 32) {
+        => (b % 95) + 32;
+    }
+    if (b > 126) {
+        => (b % 95) + 32;
+    }
+    => b;
+}
+
+func: print_slice(:data slice<int>) {
+    for :b in data {
+        sys.stdout(:'%c', :b as int);
+    }
+}
+
+init void main() {
+    int key = 42;
+
+    // Load "Monogram" as bytes
+    slice<int> input = slice.new(:8);
+    slice.set(:input, :0, :77);
+    slice.set(:input, :1, :111);
+    slice.set(:input, :2, :110);
+    slice.set(:input, :3, :111);
+    slice.set(:input, :4, :103);
+    slice.set(:input, :5, :114);
+    slice.set(:input, :6, :97);
+    slice.set(:input, :7, :109);
+
+    slice<int> ciphertext = slice.new(:8);
+    slice<int> decrypted  = slice.new(:8);
+
+    // Encrypt: pipe each byte through xor_byte then clamp_print
+    int i = 0;
+    for :b in input {
+        int enc = b as int -> xor_byte(:key) -> clamp_print;
+        slice.set(:ciphertext, :i, :enc);
+        i = i + 1;
+    }
+
+    // Decrypt: XOR is its own inverse
+    int j = 0;
+    for :b in ciphertext {
+        int dec = b as int -> xor_byte(:key) -> clamp_print;
+        slice.set(:decrypted, :j, :dec);
+        j = j + 1;
+    }
+
+    sys.stdout(:'[processor] plaintext:   ');
+    print_slice(:input);
+    sys.stdout(:'\n');
+
+    sys.stdout(:'[processor] key:         %d\n', :key);
+
+    sys.stdout(:'[processor] ciphertext:  ');
+    print_slice(:ciphertext);
+    sys.stdout(:'\n');
+
+    sys.stdout(:'[processor] decrypted:   ');
+    print_slice(:decrypted);
+    sys.stdout(:'\n');
+
+    slice.free(:input);
+    slice.free(:ciphertext);
+    slice.free(:decrypted);
+}
