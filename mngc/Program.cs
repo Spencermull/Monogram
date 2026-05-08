@@ -1,4 +1,5 @@
 ﻿using mngc.Lexer;
+using mngc.Parser;
 
 if (args.Length == 0)
 {
@@ -6,11 +7,17 @@ if (args.Length == 0)
     return 1;
 }
 
-var source = File.ReadAllText(args[0]);
-var lexer = new Lexer();
-var tokens = lexer.Tokenize(source);
-
-foreach (var token in tokens)
-    Console.WriteLine(token);
+try
+{
+    var source = File.ReadAllText(args[0]);
+    var tokens = new Lexer().Tokenize(source);
+    var ast    = new Parser(tokens).Parse();
+    Console.WriteLine($"Parsed OK — {ast.Declarations.Count} declaration(s)");
+}
+catch (ParseException ex)
+{
+    Console.Error.WriteLine($"parse error: {ex.Message}");
+    return 1;
+}
 
 return 0;
