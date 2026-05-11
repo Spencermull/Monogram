@@ -140,6 +140,14 @@ public class Lexer
         }
 
         tokens.Add(new Token(TokenType.Eof, "", line, col));
+
+        for (int i = 0; i < tokens.Count; i++)
+        {
+            var t = tokens[i];
+            if (t.Type == TokenType.CharLit && t.Value.Length != 3)
+                tokens[i] = new Token(TokenType.Invalid, t.Value, t.Line, t.Column);
+        }
+
         return tokens;
     }
 
