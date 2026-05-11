@@ -67,6 +67,7 @@ public class CompletionHandler : CompletionHandlerBase
     private static readonly string[] Keywords =
     [
         "if", "else", "match", "for", "in", "as",
+        "break", "continue",
         "const", "volatile", "transform", "true", "false",
     ];
 

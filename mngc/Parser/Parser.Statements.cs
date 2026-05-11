@@ -29,12 +29,14 @@ public partial class Parser
 
         return Current.Type switch
         {
-            TokenType.If     => ParseIf(),
-            TokenType.Match  => ParseMatch(),
-            TokenType.For    => ParseFor(),
-            TokenType.LBrace => ParseBlock(),
+            TokenType.If       => ParseIf(),
+            TokenType.Match    => ParseMatch(),
+            TokenType.For      => ParseFor(),
+            TokenType.LBrace   => ParseBlock(),
             TokenType.FatArrow => ParseReturn(),
-            _                => ParseExprOrAssign(),
+            TokenType.Break    => ParseBreak(),
+            TokenType.Continue => ParseContinue(),
+            _                  => ParseExprOrAssign(),
         };
     }
 
@@ -86,6 +88,20 @@ public partial class Parser
         var value = ParseExpr();
         Expect(TokenType.Semicolon);
         return new ReturnStmt(value);
+    }
+
+    private BreakStmt ParseBreak()
+    {
+        Expect(TokenType.Break);
+        Expect(TokenType.Semicolon);
+        return new BreakStmt();
+    }
+
+    private ContinueStmt ParseContinue()
+    {
+        Expect(TokenType.Continue);
+        Expect(TokenType.Semicolon);
+        return new ContinueStmt();
     }
 
     private StmtNode ParseExprOrAssign()

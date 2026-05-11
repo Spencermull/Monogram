@@ -28,6 +28,8 @@ public enum TokenType
     True,
     False,
     Void,
+    Break,
+    Continue,
 
     // Primitive types
     Int8, Int16, Int32, Int64,

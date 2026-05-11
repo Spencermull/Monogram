@@ -40,6 +40,8 @@ public partial class CEmitter
             case ForTypedStmt ft:      EmitForTyped(ft);      break;
             case ForIterStmt fi:       EmitForIter(fi);       break;
             case ForMappedIterStmt fmi:EmitForMappedIter(fmi);break;
+            case BreakStmt:    Line("break;");    break;
+            case ContinueStmt: Line("continue;"); break;
             default: Line($"/* unhandled stmt: {stmt.GetType().Name} */"); break;
         }
     }

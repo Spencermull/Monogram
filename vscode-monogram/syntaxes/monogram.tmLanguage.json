@@ -38,7 +38,7 @@
             "patterns": [
                 {
                     "name": "keyword.control.monogram",
-                    "match": "\\b(if|else|match|for|in|as)\\b"
+                    "match": "\\b(if|else|match|for|in|as|break|continue)\\b"
                 },
                 {
                     "name": "keyword.declaration.monogram",

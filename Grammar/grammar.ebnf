@@ -111,6 +111,8 @@ stmt            ::= var_decl
                   | match_stmt
                   | for_stmt
                   | return_stmt
+                  | break_stmt
+                  | continue_stmt
                   | expr_stmt
                   | block
 
@@ -119,6 +121,10 @@ block           ::= "{" stmt* "}"
 assign_stmt     ::= expr "=" expr ";"
 
 return_stmt     ::= "=>" expr ";"
+
+break_stmt      ::= "break" ";"
+
+continue_stmt   ::= "continue" ";"
 
 expr_stmt       ::= expr ";"
 

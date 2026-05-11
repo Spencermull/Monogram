@@ -44,6 +44,8 @@ public class Lexer
         new(TokenType.Void,      @"^void\b"),
         new(TokenType.True,      @"^true\b"),
         new(TokenType.False,     @"^false\b"),
+        new(TokenType.Break,     @"^break\b"),
+        new(TokenType.Continue,  @"^continue\b"),
 
         // Primitive types — sized variants before unsized
         new(TokenType.Int8,      @"^int8\b"),

@@ -53,6 +53,8 @@ public record BlockStmt(List<StmtNode> Stmts) : StmtNode;
 public record AssignStmt(ExprNode Target, ExprNode Value) : StmtNode;
 public record ReturnStmt(ExprNode Value) : StmtNode;
 public record ExprStmt(ExprNode Expr) : StmtNode;
+public record BreakStmt : StmtNode;
+public record ContinueStmt : StmtNode;
 
 public record ElseIf(ExprNode Cond, BlockStmt Body);
 public record IfStmt(
