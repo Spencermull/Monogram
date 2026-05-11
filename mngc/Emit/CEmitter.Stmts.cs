@@ -113,10 +113,10 @@ public partial class CEmitter
     {
         var expr = EmitExpr(f.Expr);
         var cond = EmitExpr(f.CondVal);
-        Line($"for (; {expr} {f.CondOp} {cond}; )");
+        Line($"uintptr_t {f.VarName} = {expr};");
+        Line($"for (; {f.VarName} {f.CondOp} {cond}; /* mutate :{f.VarName} in body to advance */)");
         Line("{");
         Push();
-        Line($"/* {f.VarName} bound to {expr} */");
         foreach (var s in f.Body.Stmts) EmitStmt(s);
         Pop();
         Line("}");
@@ -127,10 +127,10 @@ public partial class CEmitter
         var expr = EmitExpr(f.Expr);
         var cond = EmitExpr(f.CondVal);
         Line($"/* mapped (parallel) iter — emitted as sequential */");
-        Line($"for (; {expr} {f.CondOp} {cond}; )");
+        Line($"uintptr_t {f.VarName} = {expr};");
+        Line($"for (; {f.VarName} {f.CondOp} {cond}; /* mutate :{f.VarName} in body to advance */)");
         Line("{");
         Push();
-        Line($"/* {f.VarName} bound to {expr} */");
         foreach (var s in f.Body.Stmts) EmitStmt(s);
         Pop();
         Line("}");
