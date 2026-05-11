@@ -72,8 +72,10 @@ public partial class CEmitter
         throw new NotSupportedException("match statement requires a type checker — not yet implemented");
     }
 
+    /// <summary>the collection expression is assumed to be mgslice_t* — passing any other type produces invalid C</summary>
     private void EmitForEach(ForEachStmt f)
     {
+        Line($"/* for-in requires slice<T> — type not verified by compiler */");
         var coll = EmitExpr(f.Collection);
         Line($"for (size_t _i = 0; _i < {coll}->len; _i++)");
         Line("{");
@@ -84,8 +86,10 @@ public partial class CEmitter
         Line("}");
     }
 
+    /// <summary>the collection expression is assumed to be mgslice_t* — passing any other type produces invalid C</summary>
     private void EmitForMap(ForMapStmt f)
     {
+        Line($"/* for-in requires slice<T> — type not verified by compiler */");
         var coll = EmitExpr(f.Collection);
         Line($"/* mapped foreach — emitted as sequential */");
         Line($"for (size_t _i = 0; _i < {coll}->len; _i++)");
