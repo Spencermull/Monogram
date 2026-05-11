@@ -183,6 +183,112 @@ op: add_vec(a, b) => int {
 
 > `op:` parameters are untyped by design — all params are emitted as `void*` in C.
 
+### Visibility-qualified constants
+
+```monogram
+econst int MAX_CONNECTIONS = 100;   // extern const — readable across modules
+xconst int INTERNAL_KEY = 0xFF34;   // static const — private to this file
+```
+
+| Qualifier | C emission | Visibility |
+|---|---|---|
+| `const` | `const` | module-local |
+| `econst` | `extern const` | readable outside module, never writable |
+| `xconst` | `static const` | compiler error if accessed outside file |
+
+### rebinds
+
+Reassign a binding without redeclaring it.
+
+```monogram
+int x = 5;
+rebind x = 10;
+```
+
+Emits a plain C assignment. The type checker verifies the right-hand side is compatible with the declared type.
+
+### deref bind
+
+Bind a name to a dereferenced memory location.
+
+```monogram
+int val = 42;
+int[] ptr = @val;
+deref bind :ref = ~ptr;   // ref == 42
+```
+
+Emits `type name = *source;`.
+
+### Argument qualifiers (argx)
+
+Optional call-site qualifiers on function parameters that control coercion and transformation.
+
+```monogram
+func: scale(:v Vec2, argx :factor float32) => Vec2 { }
+scale(:a, :2);   // int auto-cast to float32 at call site
+
+func: process(argm :v Vec2 -> normalize) => float32 { }
+process(:a);     // a is normalized before reaching the body
+
+func: write(xarg :data byte[]) { }   // exact type required — no coercion
+```
+
+| Qualifier | Behaviour |
+|---|---|
+| `argx` | auto-coerce to declared type at call site |
+| `xarg` | exact type required — no casting |
+| `argm` | transform argument through a named function before entering body |
+| `xargm` | strict mapped — both input and output types enforced |
+
+### Concurrency blocks
+
+```monogram
+#import<mono.phase>
+
+phased :stage_one {
+    process.thread(:task_a);
+    process.thread(:task_b);
+}
+// all threads in stage_one finish before execution continues
+
+dephased {
+    process.thread(:logger);   // fire and forget — no sync
+}
+
+container :workers {
+    process.thread(:task_a);
+    process.thread(:task_b);
+}
+// all threads joined when workers exits scope
+```
+
+Requires `#import<mono.phase>`. Emits POSIX pthreads.
+
+### Lifecycle buffer
+
+Always active — zero import, zero runtime overhead. The compiler tracks four states per binding.
+
+| State | Meaning |
+|---|---|
+| `raw` | allocated, not yet initialised |
+| `live` | initialised and valid |
+| `spent` | consumed — cannot be read |
+| `dead` | freed or out of scope |
+
+```monogram
+int x;             // raw
+x = 5;             // live
+=> x;              // x is now spent
+sys.stdout(:x);    // LIFECYCLE ERROR — x is spent
+```
+
+The `~>` transfer operator moves lifecycle ownership:
+
+```monogram
+Vec2 a = make_vec(:3.0, :4.0);
+Vec2 b ~> a;      // b is live, a is spent
+```
+
 ### Memory
 ```monogram
 int[] buf  = std.mem.alloc(:256);
@@ -284,23 +390,52 @@ Ships with the compiler. All `std.*` modules map to C stdlib functionality with 
 | `std.io.flush(:file)` | fflush |
 | `std.io.scanf(:'fmt', args)` | scanf |
 
-#### std.time *(planned)*
-Clocks, timestamps, delays, timers. Maps to `time.h` and platform clock APIs.
+#### std.time
+| Call | Description |
+|---|---|
+| `std.time.now()` | current unix time (time_t) |
+| `std.time.clock()` | processor time used (clock_t) |
+| `std.time.diff(:a, :b)` | elapsed seconds between two time_t values |
+| `std.time.sleep(:ms)` | sleep for milliseconds |
 
-#### std.sync *(planned)*
-Basic synchronization primitives: mutex, semaphore, spinlock, atomics. Maps to `pthread` and platform sync APIs.
+#### std.env
+| Call | Description |
+|---|---|
+| `std.env.get(:'name')` | getenv — returns char* or NULL |
 
-#### std.fs *(planned)*
-Filesystem operations beyond raw open/close/read/write — directory traversal, stat, rename, delete.
+#### std.sync
+| Call | Description |
+|---|---|
+| `std.sync.mutex()` | allocate and initialise a mutex |
+| `std.sync.lock(:m)` | acquire mutex |
+| `std.sync.unlock(:m)` | release mutex |
+| `std.sync.mutex_free(:m)` | destroy and free mutex |
+
+#### std.fs
+| Call | Description |
+|---|---|
+| `std.fs.rename(:'src', :'dst')` | rename / move a file |
+| `std.fs.remove(:'path')` | delete a file |
+| `std.fs.exists(:'path')` | 1 if file exists, 0 otherwise |
+
+#### std.proc
+| Call | Description |
+|---|---|
+| `std.proc.spawn(:'cmd')` | run shell command (system) |
+| `std.proc.pid()` | current process ID |
+
+#### std.delta
+| Call | Description |
+|---|---|
+| `std.delta.d2(:x1, :y1, :x2, :y2)` | 2-D delta between two points |
+| `std.delta.d3(:x1,:y1,:z1,:x2,:y2,:z2)` | 3-D delta |
+| `std.delta.mag(:d)` | magnitude (Euclidean length) of a delta |
+| `std.delta.dx(:d)` | x component |
+| `std.delta.dy(:d)` | y component |
+| `std.delta.dz(:d)` | z component |
 
 #### std.net *(planned)*
 Socket primitives and low-level networking. Maps to POSIX socket APIs.
-
-#### std.proc *(planned)*
-Process spawning, signals, IPC. Maps to `unistd.h`, `signal.h`, `sys/wait.h`.
-
-#### std.env *(planned)*
-Environment variables and CLI argument access. Maps to `getenv`, `argc`/`argv`.
 
 ---
 
@@ -403,9 +538,23 @@ Higher-level tooling and developer experience. Built on top of `mono`. All `mtx.
 | GCC driver | Implemented |
 | LSP server | Implemented |
 | VS Code extension | Implemented |
-| `match` statement | Blocked — requires type checker |
-| Generic functions | Blocked — requires type checker |
+| Type checker | Implemented |
+| `match` statement | Planned — blocked on emitter integration |
+| Generic functions | Planned — blocked on emitter integration |
+| `econst` / `xconst` | Implemented |
+| `rebinds` | Implemented |
+| `deref bind` | Implemented |
+| `argx` qualifiers | Implemented |
+| `phased` / `dephased` | Implemented |
+| Thread `container` | Implemented |
+| Lifecycle buffer | Implemented |
+| `std.time` | Implemented |
+| `std.env` | Implemented |
+| `std.sync` | Implemented |
+| `std.fs` | Implemented |
+| `std.proc` | Implemented |
+| `std.delta` | Implemented |
+| `std.net` | Planned |
 | `mono.*` / `mtx.*` libraries | Planned |
-| Type checker | Planned |
 
-v0.1.1
+v0.2.0
