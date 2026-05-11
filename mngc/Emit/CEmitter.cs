@@ -90,6 +90,8 @@ public partial class CEmitter
         {
             if (decl is FuncDeclNode f)
             {
+                if (f.GenericParams.Count > 0)
+                    throw new NotSupportedException("generic functions are not yet supported by the emitter");
                 var ret   = f.Return != null ? EmitTypeExpr(f.Return.Type) : "void";
                 var parms = string.Join(", ", f.Params.Select(p => $"{EmitTypeExpr(p.Type)} {p.Name}"));
                 Line($"{ret} {f.Name}({parms});");
