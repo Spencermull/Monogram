@@ -90,7 +90,7 @@ static int RunBuild(string[] args, bool run)
 
 static void PrintHelp()
 {
-    Console.WriteLine("mono — Monogram compiler v0.1.0");
+    Console.WriteLine("mono — Monogram compiler v0.1.1");
     Console.WriteLine();
     Console.WriteLine("commands:");
     Console.WriteLine("  mono run   <file.mngrm>              compile and run");
