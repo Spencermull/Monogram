@@ -17,6 +17,7 @@ public partial class CEmitter
 
     private void EmitOpDecl(OpDeclNode o)
     {
+        Line($"/* op: params are untyped by design — void* erased */");
         var parms = string.Join(", ", o.OpParams.Select(p => $"void* {p}"));
         Line($"{o.ReturnType} {o.Name}({parms})");
         EmitBlock(o.Body);
