@@ -34,9 +34,8 @@ public partial class CEmitter
         // Seed headers from explicit imports
         foreach (var imp in program.Imports)
         {
-            var h = ResolveImport(imp.ModulePath, imp.Wildcard);
-            if (h != null) _requiredHeaders.Add(h);
-            else _sb.AppendLine($"/* unresolved import: {imp.ModulePath}{(imp.Wildcard ? ".*" : "")} */");
+            if (!ResolveImport(imp.ModulePath, imp.Wildcard))
+                _sb.AppendLine($"/* unresolved import: {imp.ModulePath}{(imp.Wildcard ? ".*" : "")} */");
         }
 
         // Types first so forward decls and main can reference them
@@ -69,19 +68,27 @@ public partial class CEmitter
         return headers.ToString() + _sb.ToString();
     }
 
-    private static string? ResolveImport(string path, bool wildcard) => path switch
+    private bool ResolveImport(string path, bool wildcard)
     {
-        "std.io"            => "<stdio.h>",
-        "std" when wildcard => "<stdio.h>",
-        "std.mem"           => "<stdlib.h>",
-        "std.str"           => "<string.h>",
-        "std.math"          => "<math.h>",
-        "node"              => "node",      // inline module
-        "lattice"           => "lattice",   // inline module
-        "process"           => "process",   // inline module
-        "slice"             => "slice",     // inline module
-        _                   => null,
-    };
+        switch (path)
+        {
+            case "std.io":   _requiredHeaders.Add("<stdio.h>");  return true;
+            case "std.mem":  _requiredHeaders.Add("<stdlib.h>"); return true;
+            case "std.str":  _requiredHeaders.Add("<string.h>"); return true;
+            case "std.math": _requiredHeaders.Add("<math.h>");   return true;
+            case "std" when wildcard:
+                _requiredHeaders.Add("<stdio.h>");
+                _requiredHeaders.Add("<stdlib.h>");
+                _requiredHeaders.Add("<string.h>");
+                _requiredHeaders.Add("<math.h>");
+                return true;
+            case "node":    _requiredHeaders.Add("node");    return true;
+            case "lattice": _requiredHeaders.Add("lattice"); return true;
+            case "process": _requiredHeaders.Add("process"); return true;
+            case "slice":   _requiredHeaders.Add("slice");   return true;
+            default: return false;
+        }
+    }
 
     // Emit forward declarations for all functions so call order doesn't matter
     private void EmitForwardDeclarations(List<StmtNode> decls)
