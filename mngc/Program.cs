@@ -3,6 +3,7 @@ using mngc.Driver;
 using mngc.Emit;
 using mngc.Lexer;
 using mngc.Parser;
+using mngc.TypeChecker;
 
 if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
 {
@@ -42,6 +43,16 @@ static int RunBuild(string[] args, bool run)
         var source  = File.ReadAllText(inputPath);
         var tokens  = new Lexer().Tokenize(source);
         var ast     = new Parser(tokens).Parse();
+
+        var checker = new TypeChecker();
+        checker.Check(ast);
+        if (checker.HasErrors)
+        {
+            foreach (var err in checker.Errors)
+                Console.Error.WriteLine(err);
+            return 1;
+        }
+
         var emitter = new CEmitter();
         var cSource = emitter.Emit(ast);
 
@@ -79,6 +90,12 @@ static int RunBuild(string[] args, bool run)
     catch (ParseException ex)
     {
         Console.Error.WriteLine($"parse error: {ex.Message}");
+        return 1;
+    }
+    catch (SemanticException ex)
+    {
+        foreach (var err in ex.Errors)
+            Console.Error.WriteLine(err);
         return 1;
     }
     catch (FileNotFoundException)
