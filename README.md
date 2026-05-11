@@ -290,4 +290,4 @@ process.free(:p);
 
 ## Status
 
-v0.1.1 — lexer, parser, C emitter, GCC driver, LSP server, VS Code extension.
+v0.1.0 — lexer, parser, C emitter, GCC driver, LSP server, VS Code extension.
