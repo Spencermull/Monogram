@@ -100,10 +100,10 @@ public partial class CEmitter
     private void EmitForTyped(ForTypedStmt f)
     {
         Line($"/* for -> type {f.TypeName}: {f.VarName} */");
-        Line($"for ({f.TypeName}* _it = {f.VarName}; _it != NULL; _it++)");
+        Line($"for ({f.TypeName}* _typed_it = {f.VarName}; _typed_it != NULL; _typed_it++)");
         Line("{");
         Push();
-        Line($"{f.TypeName} {f.VarName} = *_it;");
+        Line($"{f.TypeName} {f.VarName} = *_typed_it;");
         foreach (var s in f.Body.Stmts) EmitStmt(s);
         Pop();
         Line("}");
