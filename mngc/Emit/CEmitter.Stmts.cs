@@ -68,18 +68,8 @@ public partial class CEmitter
 
     private void EmitMatch(MatchStmt m)
     {
-        Line($"/* match: {m.Subject} */");
-        bool first = true;
-        foreach (var arm in m.Arms)
-        {
-            var pattern = arm.Pattern != null
-                ? $"/* {m.Subject} is {EmitTypeExpr(arm.Pattern)} */"
-                : "/* _ (wildcard) */";
-
-            if (first) { Line($"if ({pattern} 0)"); first = false; }
-            else        Line($"else if ({pattern} 0)");
-            EmitBlock(arm.Body);
-        }
+        // match on types requires a type checker — not yet implemented
+        throw new NotSupportedException("match statement requires a type checker — not yet implemented");
     }
 
     private void EmitForEach(ForEachStmt f)
