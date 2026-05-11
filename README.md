@@ -37,6 +37,8 @@ dotnet run -- build <file.mngrm> --keep-c   # keep intermediate .c file
 dotnet run -- run   <file.mngrm>            # compile and run
 ```
 
+---
+
 ## Language overview
 
 ### Entry point
@@ -52,6 +54,8 @@ func: add(:a int, :b int) => int {
 ```
 
 Return styles: `=>` regular return, `->` mapping/transform return.
+
+> **Constraint:** Generic function declarations (`func: name<T>(...)`) are parsed but not yet supported by the emitter — the compiler will throw at compile time. Generic built-in types (`slice<T>`, `node<T, U>`) are supported.
 
 ### Variables
 ```monogram
@@ -74,7 +78,7 @@ type Transform (int -> int)               // function pointer
 type Items []                             // collection
 ```
 
-**Generic types**
+**Built-in generic types**
 ```monogram
 node<int, float>    // transform node
 slice<int>          // length-tracked array
@@ -125,12 +129,22 @@ if (x > 0) {
 }
 ```
 
-**Match**
+**Match** *(not yet implemented — requires type checker)*
 ```monogram
 match: val {
     int   => { sys.stdout(:'integer\n'); }
     float => { sys.stdout(:'float\n');   }
     _     => { sys.stdout(:'other\n');   }
+}
+```
+> The compiler rejects `match` at compile time until a type checker is implemented.
+
+**Break / Continue**
+```monogram
+for :i in counter >= 1; {
+    if (i == 5) { break; }
+    if (i == 3) { continue; }
+    sys.stdout(:'%d\n', :i);
 }
 ```
 
@@ -155,8 +169,10 @@ for :i -> counter >= 1; { }
 for -> type Node: ptr { }
 ```
 
-`for :v in slice` and `for -> :v in slice` require a `slice<T>` collection.
-The bound variable `v` is `uintptr_t` — cast with `as` for typed access.
+`for :v in slice` and `for -> :v in slice` require a `slice<T>` collection — the element type is not verified by the compiler at this stage.
+The iteration variable `v` is `uintptr_t` — cast with `as` for typed access.
+
+For iter loops (`for :i in expr cond;`) declare the variable before the loop. Mutate it in the body to advance — the increment slot is empty by design.
 
 ### Custom operators
 ```monogram
@@ -164,6 +180,8 @@ op: add_vec(a, b) => int {
     => a + b;
 }
 ```
+
+> `op:` parameters are untyped by design — all params are emitted as `void*` in C.
 
 ### Memory
 ```monogram
@@ -177,6 +195,8 @@ int val   = ~ptr;   // dereference
 ```
 
 ### Imports
+
+Import a specific module:
 ```monogram
 #import<std.io>
 #import<std.mem>
@@ -188,18 +208,42 @@ int val   = ~ptr;   // dereference
 #import<slice>
 ```
 
+Import all core std headers at once:
+```monogram
+#import<std.*>
+```
+Expands to `stdio.h`, `stdlib.h`, `string.h`, and `math.h`.
+
 ---
 
-## Standard library
+## Library reference
 
-### sys
+Monogram's libraries are organized into three tiers. Each tier has a defined scope — lower tiers have no dependency on higher ones.
+
+### Tier overview
+
+| Tier | Prefix | Role |
+|---|---|---|
+| Standard Library | `std` | Thin wrappers over C stdlib. Ships with the compiler. |
+| Systems Extensions | `mono` | Official systems-focused packages. Maintained by Monogram. |
+| Developer Tooling | `mtx` | Higher-level tooling and dev experience. Built on top of mono. |
+
+Inline data structures (`node`, `lattice`, `slice`, `process`) are bundled with the compiler and do not follow the tier prefix convention.
+
+---
+
+### std — Standard Library
+
+Ships with the compiler. All `std.*` modules map to C stdlib functionality with no external dependencies.
+
+#### sys *(built-in, no import)*
 | Call | Description |
 |---|---|
 | `sys.stdout(:'fmt', args)` | printf to stdout |
 | `sys.stderr(:'fmt', args)` | printf to stderr |
 | `sys.exit(:code)` | terminate process |
 
-### std.mem
+#### std.mem
 | Call | Description |
 |---|---|
 | `std.mem.alloc(:size)` | malloc |
@@ -207,17 +251,17 @@ int val   = ~ptr;   // dereference
 | `std.mem.realloc(:ptr, :size)` | realloc |
 | `std.mem.free(:ptr)` | free |
 
-### std.str
+#### std.str
 | Call | Description |
 |---|---|
 | `std.str.len(:s)` | strlen |
 | `std.str.copy(:dst, :src)` | strcpy |
 | `std.str.cat(:dst, :src)` | strcat |
 | `std.str.cmp(:a, :b)` | strcmp |
-| `std.str.chr(:s, :c)` | strchr |
+| `std.str.chr(:s, :c)` | strchr — first occurrence of char in string |
 | `std.str.fmt(:buf, :'fmt', args)` | sprintf |
 
-### std.math
+#### std.math
 | Call | Description |
 |---|---|
 | `std.math.sqrt(:x)` | sqrt |
@@ -230,7 +274,7 @@ int val   = ~ptr;   // dereference
 | `std.math.tan(:x)` | tan |
 | `std.math.log(:x)` | log |
 
-### std.io
+#### std.io
 | Call | Description |
 |---|---|
 | `std.io.open(:'path', :'mode')` | fopen |
@@ -240,7 +284,31 @@ int val   = ~ptr;   // dereference
 | `std.io.flush(:file)` | fflush |
 | `std.io.scanf(:'fmt', args)` | scanf |
 
-### node — graph node
+#### std.time *(planned)*
+Clocks, timestamps, delays, timers. Maps to `time.h` and platform clock APIs.
+
+#### std.sync *(planned)*
+Basic synchronization primitives: mutex, semaphore, spinlock, atomics. Maps to `pthread` and platform sync APIs.
+
+#### std.fs *(planned)*
+Filesystem operations beyond raw open/close/read/write — directory traversal, stat, rename, delete.
+
+#### std.net *(planned)*
+Socket primitives and low-level networking. Maps to POSIX socket APIs.
+
+#### std.proc *(planned)*
+Process spawning, signals, IPC. Maps to `unistd.h`, `signal.h`, `sys/wait.h`.
+
+#### std.env *(planned)*
+Environment variables and CLI argument access. Maps to `getenv`, `argc`/`argv`.
+
+---
+
+### Inline data structures
+
+Bundled with the compiler. Imported by name, not by `std.*` path.
+
+#### node — graph node
 ```monogram
 node n = node.new(:value);
 node.link(:a, :b);          // a.next = b, b.prev = a
@@ -252,18 +320,19 @@ node<int, float> t = node.transform(:n, :fn);
 node.free(:n);
 ```
 
-### lattice — 2D grid
+#### lattice — 2D grid
 ```monogram
 lattice l = lattice.new(:rows, :cols);
 lattice.set(:l, :r, :c, :value);
-lattice.get(:l, :r, :c)     // => void*
-lattice.apply(:l, :r, :c)   // apply transform fn at cell
-lattice.rows(:l)             // => int
-lattice.cols(:l)             // => int
+lattice.get(:l, :r, :c)           // => void*
+lattice.apply(:l, :r, :c)         // apply transform fn at cell
+lattice.new_transform(:rows, :cols, :fn)  // lattice with bound transform
+lattice.rows(:l)                   // => int
+lattice.cols(:l)                   // => int
 lattice.free(:l);
 ```
 
-### slice — length-tracked array
+#### slice — length-tracked array
 ```monogram
 slice<int> s = slice.new(:n);
 slice.set(:s, :i, :value);
@@ -274,7 +343,7 @@ slice.free(:s);
 for :v in s { }             // iterate; v is uintptr_t
 ```
 
-### process — byte buffer
+#### process — byte buffer
 ```monogram
 process p = process.new(:capacity);
 process.set(:p, :i, :byte);
@@ -288,6 +357,55 @@ process.free(:p);
 
 ---
 
-## Status
+### mono — Systems Extensions *(planned)*
 
-v0.1.0 — lexer, parser, C emitter, GCC driver, LSP server, VS Code extension.
+Official systems-focused packages maintained by Monogram. All `mono.*` modules are planned and not yet implemented.
+
+| Module | Description |
+|---|---|
+| `mono.pipe` | Pipeline terminus primitives — `sink`, `bucket`, `coagulate` |
+| `mono.pool` | Aliasing-free memory pool — unique allocation regions, no pointer overlap guaranteed |
+| `mono.phase` | Barrier-synchronized operation blocks — `phased` and `dephased` coordination |
+| `mono.lock` | Adaptive locking — `transmutex` upgrades from spinlock to blocking mutex under contention |
+| `mono.linear` | Bilinearism and parallel linear execution paths |
+| `mono.graph` | Polymaps, graph matrices, adjacency structures |
+| `mono.inspect` | Live structure inspection without halting execution |
+| `mono.glob` | Pattern matching on memory regions — globs and blobs |
+| `mono.utils` | General utility belt |
+| `mono.polymorph` | Runtime type dispatch and polymorphism utilities |
+| `mono.pod` | Portable datasets — bundles data with its processing pipeline as one unit |
+| `mono.utdctrl` | Unified thread orchestration over threads, telemetry, and processor management |
+| `mono.delta` | Position deltas and change tracking between two states |
+
+---
+
+### mtx — Developer Tooling *(planned)*
+
+Higher-level tooling and developer experience. Built on top of `mono`. All `mtx.*` modules are planned and not yet implemented.
+
+| Module | Description |
+|---|---|
+| `mtx.argus` | Logging, diagnostics, crash reporting, runtime monitoring |
+| `mtx.benchmark` | Profiling, timing harnesses, throughput measurement |
+| `mtx.encode` | UTF-8, ASCII, and binary encoding and decoding |
+| `mtx.hash` | Checksums and hashing primitives |
+| `mtx.compress` | Compression primitives |
+
+---
+
+## Compiler status
+
+| Feature | Status |
+|---|---|
+| Lexer | Implemented |
+| Parser | Implemented |
+| C emitter | Implemented |
+| GCC driver | Implemented |
+| LSP server | Implemented |
+| VS Code extension | Implemented |
+| `match` statement | Blocked — requires type checker |
+| Generic functions | Blocked — requires type checker |
+| `mono.*` / `mtx.*` libraries | Planned |
+| Type checker | Planned |
+
+v0.1.1
