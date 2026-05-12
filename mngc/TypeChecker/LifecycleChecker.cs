@@ -178,7 +178,10 @@ public class LifecycleChecker
                 break;
 
             case CallExpr c:
-                // std.mem.free(:ptr) transitions ptr to dead
+                // Check args in their current state before any transitions
+                foreach (var a in c.Args) CheckExpr(a.Value);
+                if (c.Callee is not MemberAccessExpr) CheckExpr(c.Callee);
+                // std.mem.free(:ptr) transitions ptr to dead after the arg is validated
                 if (TryQualName(c.Callee) == "std.mem.free" && c.Args.Count == 1)
                 {
                     var arg = c.Args[0].Value;
@@ -187,8 +190,6 @@ public class LifecycleChecker
                                   : null;
                     if (fname != null) SetState(fname, LifecycleState.Dead);
                 }
-                foreach (var a in c.Args) CheckExpr(a.Value);
-                if (c.Callee is not MemberAccessExpr) CheckExpr(c.Callee);
                 break;
 
             case BinaryExpr b:
