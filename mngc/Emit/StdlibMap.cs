@@ -37,7 +37,14 @@ public static class StdlibMap
         ["std.math.log"]    = new("<math.h>",    args => $"log({args[0]})"),
 
         // std.io — file I/O
-        ["std.io.open"]     = new("<stdio.h>",   args => $"fopen({args[0]}, {args[1]})"),
+        // A single-char mode like 'r' is parsed as CharLit and emits as 'r' (int) in C.
+        // fopen requires a string — convert 'x' → "x" at emit time.
+        ["std.io.open"]     = new("<stdio.h>",   args => {
+            var mode = args[1];
+            if (mode.Length == 3 && mode[0] == '\'' && mode[2] == '\'')
+                mode = $"\"{mode[1]}\"";
+            return $"fopen({args[0]}, {mode})";
+        }),
         ["std.io.close"]    = new("<stdio.h>",   args => $"fclose({args[0]})"),
         ["std.io.read"]     = new("<stdio.h>",   args => $"fgets({args[0]}, {args[1]}, {args[2]})"),
         ["std.io.write"]    = new("<stdio.h>",   args => $"fputs({args[0]}, {args[1]})"),
