@@ -55,6 +55,8 @@ public partial class CEmitter
         Mutability.Const         => "const ",
         Mutability.Volatile      => "volatile ",
         Mutability.ConstVolatile => "const volatile ",
+        Mutability.EConst        => "extern const ",
+        Mutability.XConst        => "static const ",
         _                        => "",
     };
 }

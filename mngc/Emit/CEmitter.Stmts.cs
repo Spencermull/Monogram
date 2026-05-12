@@ -40,8 +40,13 @@ public partial class CEmitter
             case ForTypedStmt ft:      EmitForTyped(ft);      break;
             case ForIterStmt fi:       EmitForIter(fi);       break;
             case ForMappedIterStmt fmi:EmitForMappedIter(fmi);break;
-            case BreakStmt:    Line("break;");    break;
-            case ContinueStmt: Line("continue;"); break;
+            case BreakStmt:        Line("break;");         break;
+            case ContinueStmt:     Line("continue;");      break;
+            case RebindStmt rb:    EmitRebind(rb);         break;
+            case DerefBindStmt db: EmitDerefBind(db);      break;
+            case ContainerStmt cs: EmitContainer(cs);      break;
+            case PhasedStmt ps:    EmitPhased(ps);         break;
+            case DePhasedStmt dp:  EmitDephased(dp);       break;
             default: Line($"/* unhandled stmt: {stmt.GetType().Name} */"); break;
         }
     }
@@ -140,6 +145,96 @@ public partial class CEmitter
         foreach (var s in f.Body.Stmts) EmitStmt(s);
         Pop();
         Line("}");
+    }
+
+    private void EmitRebind(RebindStmt r) => Line($"{r.Name} = {EmitExpr(r.Value)};");
+
+    private void EmitDerefBind(DerefBindStmt d)
+    {
+        // deref bind :ref = ~ptr  →  <inferred-type> ref = *<source>;
+        // We don't track the inner type here so we emit void* and let C handle it.
+        Line($"void* {d.Name} = (void*)({EmitExpr(d.Source)});");
+    }
+
+    private void EmitContainer(ContainerStmt cs)
+    {
+        _requiredHeaders.Add("mono.phase");
+        Line($"/* container :{cs.VarName} — scoped thread group, all threads joined on exit */");
+        Line($"mg_container_t* {cs.VarName} = mg_container_new();");
+        Line("{");
+        Push();
+        EmitContainerBody(cs.Body, cs.VarName, detach: false);
+        Pop();
+        Line("}");
+        Line($"mg_container_join({cs.VarName});");
+    }
+
+    private void EmitPhased(PhasedStmt ps)
+    {
+        _requiredHeaders.Add("mono.phase");
+        Line($"/* phased :{ps.VarName} — all threads must complete before execution continues */");
+        // Count thread spawns to initialise the barrier correctly
+        int threadCount = ps.Body.Stmts.Count(s => s is ExprStmt { Expr: CallExpr c } &&
+            TryQualifiedCallName(c) == "process.thread");
+        Line($"mg_phased_t* {ps.VarName} = mg_phased_new({Math.Max(threadCount, 1)});");
+        Line("{");
+        Push();
+        EmitContainerBody(ps.Body, ps.VarName, detach: false);
+        Pop();
+        Line("}");
+        Line($"mg_phased_join({ps.VarName});");
+    }
+
+    private void EmitDephased(DePhasedStmt dp)
+    {
+        _requiredHeaders.Add("mono.phase");
+        Line($"/* dephased — fire-and-forget, no synchronisation */");
+        Line("{");
+        Push();
+        EmitContainerBody(dp.Body, containerVar: null, detach: true);
+        Pop();
+        Line("}");
+    }
+
+    // Emit the body of a container/phased/dephased block.
+    // Thread spawns (process.thread(:fn)) are intercepted and emitted as mg_thread_spawn.
+    private void EmitContainerBody(BlockStmt body, string? containerVar, bool detach)
+    {
+        foreach (var stmt in body.Stmts)
+        {
+            if (stmt is ExprStmt { Expr: CallExpr call } &&
+                TryQualifiedCallName(call) == "process.thread" &&
+                call.Args.Count == 1)
+            {
+                var fn = EmitExpr(call.Args[0].Value);
+#if _WIN32_NOT_SET
+                var handleVar = $"_th_{fn.Replace(".", "_")}";
+                Line($"HANDLE {handleVar} = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)mg_thread_run, {fn}, 0, NULL);");
+                if (containerVar != null) Line($"mg_container_add({containerVar}, {handleVar});");
+#else
+                var handleVar = $"_th_{fn.Replace(".", "_").Replace(":", "")}";
+                Line($"pthread_t {handleVar};");
+                Line($"pthread_create(&{handleVar}, NULL, mg_thread_run, (void*)(uintptr_t){fn});");
+                if (!detach && containerVar != null) Line($"mg_container_add({containerVar}, {handleVar});");
+                else if (detach) Line($"pthread_detach({handleVar});");
+#endif
+            }
+            else
+            {
+                EmitStmt(stmt);
+            }
+        }
+    }
+
+    private static string? TryQualifiedCallName(CallExpr c)
+    {
+        static string? Flatten(ExprNode e) => e switch
+        {
+            IdentifierExpr id  => id.Name,
+            MemberAccessExpr m => Flatten(m.Object) is string o ? $"{o}.{m.Member}" : null,
+            _                  => null,
+        };
+        return Flatten(c.Callee);
     }
 }
 

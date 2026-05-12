@@ -18,7 +18,7 @@ public partial class Parser
     private StmtNode ParseStmt()
     {
         // var decl: starts with optional mutability or a type
-        if (CheckAny(TokenType.Const, TokenType.Volatile) || IsTypeStart())
+        if (CheckAny(TokenType.Const, TokenType.Volatile, TokenType.EConst, TokenType.XConst) || IsTypeStart())
         {
             // disambiguate: could be a type-led var decl or just an expression starting with an identifier
             // var decl has the form: [mutability] type_expr IDENTIFIER
@@ -29,14 +29,19 @@ public partial class Parser
 
         return Current.Type switch
         {
-            TokenType.If       => ParseIf(),
-            TokenType.Match    => ParseMatch(),
-            TokenType.For      => ParseFor(),
-            TokenType.LBrace   => ParseBlock(),
-            TokenType.FatArrow => ParseReturn(),
-            TokenType.Break    => ParseBreak(),
-            TokenType.Continue => ParseContinue(),
-            _                  => ParseExprOrAssign(),
+            TokenType.If        => ParseIf(),
+            TokenType.Match     => ParseMatch(),
+            TokenType.For       => ParseFor(),
+            TokenType.LBrace    => ParseBlock(),
+            TokenType.FatArrow  => ParseReturn(),
+            TokenType.Break     => ParseBreak(),
+            TokenType.Continue  => ParseContinue(),
+            TokenType.Rebind    => ParseRebind(),
+            TokenType.Deref     => ParseDerefBind(),
+            TokenType.Container => ParseContainer(),
+            TokenType.Phased    => ParsePhased(),
+            TokenType.Dephased  => ParseDephased(),
+            _                   => ParseExprOrAssign(),
         };
     }
 
@@ -46,8 +51,12 @@ public partial class Parser
         int saved = _pos;
         try
         {
-            if (CheckAny(TokenType.Const, TokenType.Volatile)) Advance();
-            if (Check(TokenType.Const) || Check(TokenType.Volatile)) Advance(); // const volatile
+            if (CheckAny(TokenType.EConst, TokenType.XConst)) Advance();
+            else
+            {
+                if (CheckAny(TokenType.Const, TokenType.Volatile)) Advance();
+                if (Check(TokenType.Const) || Check(TokenType.Volatile)) Advance(); // const volatile
+            }
             if (!IsTypeStart()) return false;
             ParseTypeExpr();
             return Check(TokenType.Identifier);
@@ -65,7 +74,9 @@ public partial class Parser
     private VarDeclNode ParseVarDecl()
     {
         var mut = Mutability.None;
-        if (Check(TokenType.Const) && Peek().Type == TokenType.Volatile)
+        if (TryConsume(TokenType.EConst))      mut = Mutability.EConst;
+        else if (TryConsume(TokenType.XConst)) mut = Mutability.XConst;
+        else if (Check(TokenType.Const) && Peek().Type == TokenType.Volatile)
         {
             Advance(); Advance();
             mut = Mutability.ConstVolatile;
@@ -237,5 +248,52 @@ public partial class Parser
             throw new ParseException("expected condition operator", Current.Line, Current.Column);
         var op = Advance().Value;
         return (op, ParseExpr());
+    }
+
+    private RebindStmt ParseRebind()
+    {
+        Expect(TokenType.Rebind);
+        var name = ExpectIdentifier();
+        Expect(TokenType.Assign);
+        var value = ParseExpr();
+        Expect(TokenType.Semicolon);
+        return new RebindStmt(name, value);
+    }
+
+    private DerefBindStmt ParseDerefBind()
+    {
+        Expect(TokenType.Deref);
+        // consume the literal word "bind" as an identifier
+        if (Current.Value != "bind")
+            throw new ParseException("expected 'bind' after 'deref'", Current.Line, Current.Column);
+        Advance();
+        Expect(TokenType.Colon);
+        var name = ExpectIdentifier();
+        Expect(TokenType.Assign);
+        var source = ParseExpr();
+        Expect(TokenType.Semicolon);
+        return new DerefBindStmt(name, source);
+    }
+
+    private ContainerStmt ParseContainer()
+    {
+        Expect(TokenType.Container);
+        Expect(TokenType.Colon);
+        var name = ExpectIdentifier();
+        return new ContainerStmt(name, ParseBlock());
+    }
+
+    private PhasedStmt ParsePhased()
+    {
+        Expect(TokenType.Phased);
+        Expect(TokenType.Colon);
+        var name = ExpectIdentifier();
+        return new PhasedStmt(name, ParseBlock());
+    }
+
+    private DePhasedStmt ParseDephased()
+    {
+        Expect(TokenType.Dephased);
+        return new DePhasedStmt(ParseBlock());
     }
 }

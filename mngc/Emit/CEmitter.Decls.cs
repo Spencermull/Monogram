@@ -9,9 +9,19 @@ public partial class CEmitter
         if (f.GenericParams.Count > 0)
             throw new NotSupportedException("generic functions are not yet supported by the emitter");
         var ret   = f.Return != null ? EmitTypeExpr(f.Return.Type) : "void";
+        // argx/xarg params are emitted with the declared type (coercion is caller-side)
+        // argm/xargm params are also emitted with declared type; transform is applied in prologue
         var parms = string.Join(", ", f.Params.Select(p => $"{EmitTypeExpr(p.Type)} {p.Name}"));
         Line($"{ret} {f.Name}({parms})");
-        EmitBlock(f.Body);
+        Line("{");
+        Push();
+        // argm / xargm prologue: apply the transform to the param before the body executes
+        foreach (var p in f.Params.Where(p => p.ArgQual is ArgQualifier.Argm or ArgQualifier.Xargm && p.ArgTransform != null))
+            Line($"{p.Name} = {p.ArgTransform}({p.Name});");
+        foreach (var s in f.Body.Stmts)
+            EmitStmt(s);
+        Pop();
+        Line("}");
         _sb.AppendLine();
     }
 

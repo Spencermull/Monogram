@@ -105,6 +105,11 @@ public class TypeChecker
             case ContinueStmt:
                 if (_loopDepth == 0) Error("'continue' used outside of a loop");
                 break;
+            case RebindStmt rb:    CheckRebind(rb);        break;
+            case DerefBindStmt db: CheckDerefBind(db);     break;
+            case ContainerStmt cs: CheckContainer(cs);     break;
+            case PhasedStmt ps:    CheckPhased(ps);        break;
+            case DePhasedStmt dp:  CheckDephased(dp);      break;
         }
     }
 
@@ -195,6 +200,40 @@ public class TypeChecker
         foreach (var ei in i.ElseIfs) { InferType(ei.Cond); CheckBlock(ei.Body); }
         if (i.Else != null) CheckBlock(i.Else);
     }
+
+    private void CheckRebind(RebindStmt r)
+    {
+        var sym = _scope.Resolve(r.Name);
+        if (sym == null) { Error($"rebind: '{r.Name}' is not declared"); return; }
+        if (sym.Kind == SymbolKind.Function) { Error($"rebind: '{r.Name}' is a function and cannot be rebound"); return; }
+        var valueType = InferType(r.Value);
+        if (!IsCompatible(valueType, sym.Type))
+            Error($"rebind: cannot assign '{FormatType(valueType)}' to '{r.Name}' (type '{FormatType(sym.Type)}')");
+    }
+
+    private void CheckDerefBind(DerefBindStmt d)
+    {
+        var srcType = InferType(d.Source);
+        var innerType = srcType is MgArray a ? a.Element : MgTypes.Unknown;
+        if (!_scope.TryDeclare(new Symbol(d.Name, innerType, SymbolKind.Variable)))
+            Error($"deref bind: '{d.Name}' is already declared in this scope");
+    }
+
+    private void CheckContainer(ContainerStmt cs)
+    {
+        _scope.Push();
+        CheckBlockBody(cs.Body);
+        _scope.Pop();
+    }
+
+    private void CheckPhased(PhasedStmt ps)
+    {
+        _scope.Push();
+        CheckBlockBody(ps.Body);
+        _scope.Pop();
+    }
+
+    private void CheckDephased(DePhasedStmt dp) => CheckBlock(dp.Body);
 
     // ── For loops ─────────────────────────────────────────────────────────────
 

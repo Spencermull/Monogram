@@ -7,8 +7,11 @@ public record ImportNode(string ModulePath, bool Wildcard);
 public record EntryPointNode(string Name, BlockStmt Body);
 public record ProgramNode(List<ImportNode> Imports, EntryPointNode EntryPoint, List<StmtNode> Declarations);
 
+// Argument qualifier for function parameters
+public enum ArgQualifier { None, Argx, Xarg, Argm, Xargm }
+
 // Shared building blocks
-public record ParamNode(string Name, TypeNode Type);
+public record ParamNode(string Name, TypeNode Type, ArgQualifier ArgQual = ArgQualifier.None, string? ArgTransform = null);
 public record FieldNode(string Name, TypeNode Type);
 public record ReturnSig(TypeNode Type, bool IsMapping);
 
@@ -39,7 +42,7 @@ public record TypeDeclNode(
     TypeBodyNode? Body
 ) : StmtNode;
 
-public enum Mutability { None, Const, Volatile, ConstVolatile }
+public enum Mutability { None, Const, Volatile, ConstVolatile, EConst, XConst }
 
 public record VarDeclNode(
     Mutability Mutability,
@@ -55,6 +58,11 @@ public record ReturnStmt(ExprNode Value) : StmtNode;
 public record ExprStmt(ExprNode Expr) : StmtNode;
 public record BreakStmt : StmtNode;
 public record ContinueStmt : StmtNode;
+public record RebindStmt(string Name, ExprNode Value) : StmtNode;
+public record DerefBindStmt(string Name, ExprNode Source) : StmtNode;
+public record ContainerStmt(string VarName, BlockStmt Body) : StmtNode;
+public record PhasedStmt(string VarName, BlockStmt Body) : StmtNode;
+public record DePhasedStmt(BlockStmt Body) : StmtNode;
 
 public record ElseIf(ExprNode Cond, BlockStmt Body);
 public record IfStmt(

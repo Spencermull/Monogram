@@ -30,6 +30,17 @@ public enum TokenType
     Void,
     Break,
     Continue,
+    Rebind,
+    EConst,
+    XConst,
+    Deref,
+    Argx,
+    Xarg,
+    Argm,
+    Xargm,
+    Container,
+    Phased,
+    Dephased,
 
     // Primitive types
     Int8, Int16, Int32, Int64,

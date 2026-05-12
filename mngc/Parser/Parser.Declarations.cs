@@ -38,10 +38,26 @@ public partial class Parser
 
     private ParamNode ParseParam()
     {
+        var qual = ArgQualifier.None;
+        string? transform = null;
+
+        if (Check(TokenType.Argx))       { Advance(); qual = ArgQualifier.Argx; }
+        else if (Check(TokenType.Xarg))  { Advance(); qual = ArgQualifier.Xarg; }
+        else if (Check(TokenType.Xargm)) { Advance(); qual = ArgQualifier.Xargm; }
+        else if (Check(TokenType.Argm))  { Advance(); qual = ArgQualifier.Argm; }
+
         Expect(TokenType.Colon);
         var name = ExpectIdentifier();
         var type = ParseTypeExpr();
-        return new ParamNode(name, type);
+
+        // argm :name type -> transform
+        if (qual is ArgQualifier.Argm or ArgQualifier.Xargm && Check(TokenType.Arrow))
+        {
+            Advance();
+            transform = ExpectIdentifier();
+        }
+
+        return new ParamNode(name, type, qual, transform);
     }
 
     private OpDeclNode ParseOpDecl()

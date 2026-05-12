@@ -46,6 +46,17 @@ public class Lexer
         new(TokenType.False,     @"^false\b"),
         new(TokenType.Break,     @"^break\b"),
         new(TokenType.Continue,  @"^continue\b"),
+        new(TokenType.Dephased,  @"^dephased\b"),
+        new(TokenType.Phased,    @"^phased\b"),
+        new(TokenType.Container, @"^container\b"),
+        new(TokenType.EConst,    @"^econst\b"),
+        new(TokenType.XConst,    @"^xconst\b"),
+        new(TokenType.Deref,     @"^deref\b"),
+        new(TokenType.Rebind,    @"^rebind\b"),
+        new(TokenType.Xargm,     @"^xargm\b"),
+        new(TokenType.Argm,      @"^argm\b"),
+        new(TokenType.Xarg,      @"^xarg\b"),
+        new(TokenType.Argx,      @"^argx\b"),
 
         // Primitive types — sized variants before unsized
         new(TokenType.Int8,      @"^int8\b"),
