@@ -47,6 +47,7 @@ public partial class CEmitter
             case ContainerStmt cs: EmitContainer(cs);      break;
             case PhasedStmt ps:    EmitPhased(ps);         break;
             case DePhasedStmt dp:  EmitDephased(dp);       break;
+            case TransferStmt ts:  EmitTransfer(ts);       break;
             default: Line($"/* unhandled stmt: {stmt.GetType().Name} */"); break;
         }
     }
@@ -145,6 +146,14 @@ public partial class CEmitter
         foreach (var s in f.Body.Stmts) EmitStmt(s);
         Pop();
         Line("}");
+    }
+
+    private void EmitTransfer(TransferStmt ts)
+    {
+        // ~> transfer — copy the value, then zero out the source to enforce "spent" semantics at runtime
+        Line($"/* ~> transfer: {ts.Dest} takes ownership from {ts.Source} */");
+        Line($"__typeof__({ts.Source}) {ts.Dest} = {ts.Source};");
+        Line($"{ts.Source} = (__typeof__({ts.Source})){{0}};");
     }
 
     private void EmitRebind(RebindStmt r) => Line($"{r.Name} = {EmitExpr(r.Value)};");

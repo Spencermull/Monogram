@@ -11,6 +11,7 @@ public class Lexer
     private static readonly List<TokenDefinition> _definitions = new()
     {
         // Multi-char operators — longer patterns before any shorter prefix
+        new(TokenType.Transfer,  @"^~>"),
         new(TokenType.Arrow,     @"^->"),
         new(TokenType.FatArrow,  @"^=>"),
         new(TokenType.And,       @"^&&"),

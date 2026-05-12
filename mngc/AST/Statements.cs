@@ -63,6 +63,8 @@ public record DerefBindStmt(string Name, ExprNode Source) : StmtNode;
 public record ContainerStmt(string VarName, BlockStmt Body) : StmtNode;
 public record PhasedStmt(string VarName, BlockStmt Body) : StmtNode;
 public record DePhasedStmt(BlockStmt Body) : StmtNode;
+// ~> transfer: moves ownership from Source to Dest (Source becomes spent)
+public record TransferStmt(string Dest, string Source) : StmtNode;
 
 public record ElseIf(ExprNode Cond, BlockStmt Body);
 public record IfStmt(

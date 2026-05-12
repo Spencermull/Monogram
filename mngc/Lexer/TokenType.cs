@@ -76,8 +76,9 @@ public enum TokenType
     Star,      // *
     Slash,     // /
     Percent,   // %
-    Arrow,     // ->
-    FatArrow,  // =>
+    Arrow,       // ->
+    FatArrow,    // =>
+    Transfer,    // ~>
     And,       // &&
     Or,        // ||
     Eq,        // ==

@@ -110,6 +110,7 @@ public class TypeChecker
             case ContainerStmt cs: CheckContainer(cs);     break;
             case PhasedStmt ps:    CheckPhased(ps);        break;
             case DePhasedStmt dp:  CheckDephased(dp);      break;
+            case TransferStmt ts:  CheckTransfer(ts);      break;
         }
     }
 
@@ -234,6 +235,15 @@ public class TypeChecker
     }
 
     private void CheckDephased(DePhasedStmt dp) => CheckBlock(dp.Body);
+
+    private void CheckTransfer(TransferStmt ts)
+    {
+        var srcSym = _scope.Resolve(ts.Source);
+        if (srcSym == null) { Error($"transfer ~>: '{ts.Source}' is not declared"); return; }
+        // Declare destination with the same type as the source
+        if (!_scope.TryDeclare(new Symbol(ts.Dest, srcSym.Type, SymbolKind.Variable)))
+            Error($"transfer ~>: '{ts.Dest}' is already declared in this scope");
+    }
 
     // ── For loops ─────────────────────────────────────────────────────────────
 

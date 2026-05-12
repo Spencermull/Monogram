@@ -118,6 +118,16 @@ public partial class Parser
     private StmtNode ParseExprOrAssign()
     {
         var expr = ParseExpr();
+        // ~> transfer: dest ~> source;
+        if (Check(TokenType.Transfer))
+        {
+            Advance();
+            var source = ExpectIdentifier();
+            Expect(TokenType.Semicolon);
+            var destName = expr is IdentifierExpr id ? id.Name
+                : throw new ParseException("left side of ~> must be an identifier", Current.Line, Current.Column);
+            return new TransferStmt(destName, source);
+        }
         if (TryConsume(TokenType.Assign))
         {
             var value = ParseExpr();

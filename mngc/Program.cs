@@ -53,6 +53,15 @@ static int RunBuild(string[] args, bool run)
             return 1;
         }
 
+        var lifecycle = new LifecycleChecker();
+        lifecycle.Check(ast);
+        if (lifecycle.HasErrors)
+        {
+            foreach (var err in lifecycle.Errors)
+                Console.Error.WriteLine(err);
+            return 1;
+        }
+
         var emitter = new CEmitter();
         var cSource = emitter.Emit(ast);
 
