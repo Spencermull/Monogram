@@ -92,9 +92,24 @@ public partial class CEmitter
             case "lattice":   _requiredHeaders.Add("lattice");   return true;
             case "process":   _requiredHeaders.Add("process");   return true;
             case "slice":     _requiredHeaders.Add("slice");     return true;
-            case "mono.phase":
-            case "mono.sync":
-                _requiredHeaders.Add("mono.phase"); return true;
+            case "mono.phase":     _requiredHeaders.Add("mono.phase");     return true;
+            case "mono.sync":      _requiredHeaders.Add("mono.sync");      return true;
+            case "mono.pipe":      _requiredHeaders.Add("mono.pipe");      return true;
+            case "mono.pool":      _requiredHeaders.Add("mono.pool");      return true;
+            case "mono.linear":    _requiredHeaders.Add("mono.linear");    return true;
+            case "mono.graph":     _requiredHeaders.Add("mono.graph");     return true;
+            case "mono.inspect":   _requiredHeaders.Add("mono.inspect");   return true;
+            case "mono.glob":      _requiredHeaders.Add("mono.glob");      return true;
+            case "mono.utils":     _requiredHeaders.Add("mono.utils");     return true;
+            case "mono.polymorph": _requiredHeaders.Add("mono.polymorph"); return true;
+            case "mono.podlib":    _requiredHeaders.Add("mono.podlib");    return true;
+            case "mono.utdctrl":   _requiredHeaders.Add("mono.utdctrl");   return true;
+            case "mtx.argus":      _requiredHeaders.Add("mtx.argus");      return true;
+            case "mtx.benchmark":  _requiredHeaders.Add("mtx.benchmark");  return true;
+            case "mtx.encode":     _requiredHeaders.Add("mtx.encode");     return true;
+            case "mtx.hash":       _requiredHeaders.Add("mtx.hash");       return true;
+            case "mtx.compress":   _requiredHeaders.Add("mtx.compress");   return true;
+            case "mtx.kiln":       _requiredHeaders.Add("mtx.kiln");       return true;
             default: return false;
         }
     }

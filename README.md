@@ -492,39 +492,170 @@ process.free(:p);
 
 ---
 
-### mono — Systems Extensions *(planned)*
+### mono — Systems Extensions
 
-Official systems-focused packages maintained by Monogram. All `mono.*` modules are planned and not yet implemented.
+Official systems-focused packages maintained by Monogram. Bundled with the compiler. Import by name.
 
-| Module | Description |
+#### mono.sync
+| Call | Description |
 |---|---|
-| `mono.pipe` | Pipeline terminus primitives — `sink`, `bucket`, `coagulate` |
-| `mono.pool` | Aliasing-free memory pool — unique allocation regions, no pointer overlap guaranteed |
-| `mono.phase` | Barrier-synchronized operation blocks — `phased` and `dephased` coordination |
-| `mono.lock` | Adaptive locking — `transmutex` upgrades from spinlock to blocking mutex under contention |
-| `mono.linear` | Bilinearism and parallel linear execution paths |
-| `mono.graph` | Polymaps, graph matrices, adjacency structures |
-| `mono.inspect` | Live structure inspection without halting execution |
-| `mono.glob` | Pattern matching on memory regions — globs and blobs |
-| `mono.utils` | General utility belt |
-| `mono.polymorph` | Runtime type dispatch and polymorphism utilities |
-| `mono.pod` | Portable datasets — bundles data with its processing pipeline as one unit |
-| `mono.utdctrl` | Unified thread orchestration over threads, telemetry, and processor management |
-| `mono.delta` | Position deltas and change tracking between two states |
+| `mono.sync.transmutex()` | adaptive mutex — spins under low contention, blocks under high |
+| `mono.sync.acquire(:m)` | acquire transmutex |
+| `mono.sync.release(:m)` | release transmutex |
+| `mono.sync.free(:m)` | destroy and free transmutex |
+
+#### mono.pipe
+| Call | Description |
+|---|---|
+| `mono.pipe.sink(:fn)` | write-only terminus targeting fn |
+| `mono.pipe.write(:sink, :data)` | push data into sink |
+| `mono.pipe.sink_free(:sink)` | free sink |
+| `mono.pipe.bucket(:cap)` | bounded drainable buffer |
+| `mono.pipe.fill(:bucket, :data)` | fill bucket — state becomes live |
+| `mono.pipe.drain(:bucket)` | drain one item — state becomes spent when empty |
+| `mono.pipe.bucket_free(:bucket)` | free bucket |
+| `mono.pipe.coagulate(:a, :sa, :b, :sb, :out_len)` | merge two byte arrays |
+
+#### mono.pool
+| Call | Description |
+|---|---|
+| `mono.pool.new(:cap)` | create aliasing-free linear allocator |
+| `mono.pool.alloc(:pool, :size)` | allocate unique region — no two pointers overlap |
+| `mono.pool.reset(:pool)` | reset used counter without freeing backing memory |
+| `mono.pool.free(:pool)` | free entire pool |
+
+#### mono.phase
+See [Concurrency blocks](#concurrency-blocks) — `phased`, `dephased`, `container` statements.
+
+#### mono.linear
+| Call | Description |
+|---|---|
+| `mono.linear.new()` | create a linear execution chain |
+| `mono.linear.bind(:chain, :fn)` | append a transform stage |
+| `mono.linear.run(:chain, :data)` | run all stages sequentially, returns final result |
+| `mono.linear.free(:chain)` | free chain |
+
+#### mono.graph
+| Call | Description |
+|---|---|
+| `mono.graph.new(:cap)` | create adjacency graph with initial capacity |
+| `mono.graph.add(:g, :node)` | add node, returns index |
+| `mono.graph.link(:g, :a, :b)` | add undirected edge |
+| `mono.graph.unlink(:g, :a, :b)` | remove edge |
+| `mono.graph.has_edge(:g, :a, :b)` | 1 if edge exists |
+| `mono.graph.node(:g, :i)` | retrieve node at index |
+| `mono.graph.count(:g)` | number of nodes |
+| `mono.graph.free(:g)` | free graph |
+
+#### mono.inspect
+| Call | Description |
+|---|---|
+| `mono.inspect.dump(:ptr, :size)` | hex dump n bytes |
+| `mono.inspect.addr(:ptr)` | print address |
+| `mono.inspect.name(:'label', :ptr)` | print label + address |
+| `mono.inspect.int(:'label', :val)` | print integer value |
+| `mono.inspect.float(:'label', :val)` | print float value |
+
+#### mono.glob
+| Call | Description |
+|---|---|
+| `mono.glob.match(:'pattern', :'str')` | glob match — `*` and `?` supported |
+| `mono.glob.scan(:data, :dlen, :pat, :plen)` | scan byte region for byte pattern, returns offset or -1 |
+
+#### mono.utils
+| Call | Description |
+|---|---|
+| `mono.utils.swap(:a, :b, :size)` | swap two memory regions |
+| `mono.utils.ispow2(:n)` | 1 if n is a power of 2 |
+| `mono.utils.next_pow2(:n)` | next power of 2 ≥ n |
+
+Macros (usable directly in expressions): `mg_min(a,b)`, `mg_max(a,b)`, `mg_clamp(v,lo,hi)`
+
+#### mono.polymorph
+| Call | Description |
+|---|---|
+| `mono.polymorph.new(:'type', :data)` | create polymorphic object with type tag |
+| `mono.polymorph.bind(:poly, :fn)` | bind a method (up to 16) |
+| `mono.polymorph.call(:poly, :idx)` | dispatch method at index |
+| `mono.polymorph.is(:poly, :'type')` | 1 if type tag matches |
+| `mono.polymorph.free(:poly)` | free object |
+
+#### mono.podlib
+| Call | Description |
+|---|---|
+| `mono.podlib.create(:size)` | create portable dataset |
+| `mono.podlib.attach(:pod, :fn)` | attach processing pipeline |
+| `mono.podlib.run(:pod)` | execute pipeline on data, returns result |
+| `mono.podlib.export(:pod, :'path')` | write data to file |
+| `mono.podlib.import(:'path')` | load pod from file |
+| `mono.podlib.free(:pod)` | free pod |
+
+#### mono.utdctrl
+| Call | Description |
+|---|---|
+| `mono.utdctrl.init()` | create thread orchestration controller |
+| `mono.utdctrl.spawn(:ctrl, :fn)` | spawn a managed thread |
+| `mono.utdctrl.telemetry(:ctrl, :fn)` | attach telemetry handler (receives status strings) |
+| `mono.utdctrl.monitor(:ctrl)` | print or emit current thread stats |
+| `mono.utdctrl.shutdown(:ctrl)` | join all threads and free controller |
 
 ---
 
-### mtx — Developer Tooling *(planned)*
+### mtx — Developer Tooling
 
-Higher-level tooling and developer experience. Built on top of `mono`. All `mtx.*` modules are planned and not yet implemented.
+Higher-level tooling and developer experience. Built on top of mono. Bundled with the compiler.
 
-| Module | Description |
+#### mtx.argus
+| Call | Description |
 |---|---|
-| `mtx.argus` | Logging, diagnostics, crash reporting, runtime monitoring |
-| `mtx.benchmark` | Profiling, timing harnesses, throughput measurement |
-| `mtx.encode` | UTF-8, ASCII, and binary encoding and decoding |
-| `mtx.hash` | Checksums and hashing primitives |
-| `mtx.compress` | Compression primitives |
+| `mtx.argus.new(:'path')` | create logger — `''` targets stdout |
+| `mtx.argus.debug(:log, :'msg')` | DEBUG level |
+| `mtx.argus.info(:log, :'msg')` | INFO level |
+| `mtx.argus.warn(:log, :'msg')` | WARN level |
+| `mtx.argus.error(:log, :'msg')` | ERROR level |
+| `mtx.argus.fatal(:log, :'msg')` | FATAL — logs then calls exit(1) |
+| `mtx.argus.free(:log)` | flush, close file, free logger |
+
+#### mtx.benchmark
+| Call | Description |
+|---|---|
+| `mtx.benchmark.new(:'name')` | create benchmark |
+| `mtx.benchmark.start(:b)` | start timer |
+| `mtx.benchmark.stop(:b)` | stop timer |
+| `mtx.benchmark.report(:b)` | print name, elapsed ms, iterations |
+| `mtx.benchmark.ms(:b)` | elapsed milliseconds as float64 |
+| `mtx.benchmark.run(:b, :fn, :n)` | run fn n times and report |
+| `mtx.benchmark.free(:b)` | free |
+
+#### mtx.encode
+| Call | Description |
+|---|---|
+| `mtx.encode.hex(:data, :len)` | hex-encode byte array → char* |
+| `mtx.encode.unhex(:'hex', :out_len)` | decode hex string → byte* |
+| `mtx.encode.base64(:data, :len)` | base64-encode → char* |
+| `mtx.encode.utf8_valid(:'str')` | 1 if valid UTF-8 |
+| `mtx.encode.ascii_only(:'str')` | 1 if ASCII only |
+
+#### mtx.hash
+| Call | Description |
+|---|---|
+| `mtx.hash.fnv1a(:data, :len)` | FNV-1a 64-bit hash |
+| `mtx.hash.crc32(:data, :len)` | CRC-32 checksum |
+| `mtx.hash.djb2(:'str')` | DJB2 64-bit string hash |
+
+#### mtx.compress
+| Call | Description |
+|---|---|
+| `mtx.compress.encode(:data, :len, :out_len)` | RLE compress → byte* |
+| `mtx.compress.decode(:data, :len, :out_len)` | RLE decompress → byte* |
+
+#### mtx.kiln
+| Call | Description |
+|---|---|
+| `mtx.kiln.new()` | create transform pipeline |
+| `mtx.kiln.stage(:k, :fn, :'name')` | append a named stage |
+| `mtx.kiln.run(:k, :data)` | run all stages sequentially |
+| `mtx.kiln.free(:k)` | free pipeline |
 
 ---
 
@@ -555,6 +686,22 @@ Higher-level tooling and developer experience. Built on top of `mono`. All `mtx.
 | `std.proc` | Implemented |
 | `std.delta` | Implemented |
 | `std.net` | Planned |
-| `mono.*` / `mtx.*` libraries | Planned |
+| `mono.sync` (transmutex) | Implemented |
+| `mono.pipe` (sink, bucket, coagulate) | Implemented |
+| `mono.pool` | Implemented |
+| `mono.linear` | Implemented |
+| `mono.graph` | Implemented |
+| `mono.inspect` | Implemented |
+| `mono.glob` | Implemented |
+| `mono.utils` | Implemented |
+| `mono.polymorph` | Implemented |
+| `mono.podlib` | Implemented |
+| `mono.utdctrl` | Implemented |
+| `mtx.argus` | Implemented |
+| `mtx.benchmark` | Implemented |
+| `mtx.encode` | Implemented |
+| `mtx.hash` | Implemented |
+| `mtx.compress` | Implemented |
+| `mtx.kiln` | Implemented |
 
 v0.2.0
