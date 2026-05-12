@@ -71,6 +71,42 @@ public static class StdlibMap
         ["slice.len"]   = new("slice", args => $"slice_len({args[0]})"),
         ["slice.free"]  = new("slice", args => $"slice_free({args[0]})"),
 
+        // std.time
+        ["std.time.now"]    = new("std.time", args => "time(NULL)"),
+        ["std.time.clock"]  = new("std.time", args => "clock()"),
+        ["std.time.diff"]   = new("std.time", args => $"difftime({args[0]}, {args[1]})"),
+        ["std.time.sleep"]  = new("std.time", args => $"mg_sleep_ms({args[0]})"),
+
+        // std.env
+        ["std.env.get"]     = new("<stdlib.h>", args => $"getenv({args[0]})"),
+
+        // std.sync
+        ["std.sync.mutex"]       = new("std.sync", args => "mg_mutex_new()"),
+        ["std.sync.lock"]        = new("std.sync", args => $"mg_mutex_lock({args[0]})"),
+        ["std.sync.unlock"]      = new("std.sync", args => $"mg_mutex_unlock({args[0]})"),
+        ["std.sync.mutex_free"]  = new("std.sync", args => $"mg_mutex_free({args[0]})"),
+
+        // std.fs
+        ["std.fs.rename"]   = new("std.fs", args => $"rename({args[0]}, {args[1]})"),
+        ["std.fs.remove"]   = new("std.fs", args => $"remove({args[0]})"),
+        ["std.fs.exists"]   = new("std.fs", args => $"mg_file_exists({args[0]})"),
+
+        // std.proc
+        ["std.proc.spawn"]  = new("std.proc", args => $"system({args[0]})"),
+        ["std.proc.pid"]    = new("std.proc", args => "mg_proc_pid()"),
+
+        // std.delta
+        ["std.delta.d2"]    = new("std.delta", args => $"mg_delta_2d({args[0]}, {args[1]}, {args[2]}, {args[3]})"),
+        ["std.delta.d3"]    = new("std.delta", args => $"mg_delta_3d({args[0]}, {args[1]}, {args[2]}, {args[3]}, {args[4]}, {args[5]})"),
+        ["std.delta.mag"]   = new("std.delta", args => $"mg_delta_mag({args[0]})"),
+        ["std.delta.dx"]    = new("std.delta", args => $"mg_delta_dx({args[0]})"),
+        ["std.delta.dy"]    = new("std.delta", args => $"mg_delta_dy({args[0]})"),
+        ["std.delta.dz"]    = new("std.delta", args => $"mg_delta_dz({args[0]})"),
+
+        // process.thread — thread spawn (used by container/phased/dephased)
+        ["process.thread"]  = new("mono.phase", args => $"mg_thread_spawn({args[0]})"),
+        ["process.join"]    = new("mono.phase", args => $"mg_thread_join({args[0]})"),
+
         // process — byte buffer pool
         ["process.new"]     = new("process", args => $"process_new({args[0]})"),
         ["process.get"]     = new("process", args => $"process_get({args[0]}, {args[1]})"),

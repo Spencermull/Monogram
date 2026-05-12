@@ -18,7 +18,7 @@ public class TypeChecker
     // ── Namespace roots that are silently accepted as identifier prefixes ─────
     private static readonly HashSet<string> KnownNamespaces = new()
     {
-        "sys", "std", "node", "lattice", "slice", "process", "mono", "mtx"
+        "sys", "std", "node", "lattice", "slice", "process", "mono", "mtx", "delta"
     };
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -463,6 +463,7 @@ public class TypeChecker
         NamedTypeNode { Name: "node" }                                        => new MgNode(),
         NamedTypeNode { Name: "lattice" }                                     => new MgLattice(),
         NamedTypeNode { Name: "process" }                                     => new MgProcess(),
+        NamedTypeNode { Name: "delta" }                                       => new MgStruct("delta"),
         NamedTypeNode n                                                       => ResolveNamedType(n.Name),
         ArrayTypeNode a                                                       => new MgArray(ResolveTypeNode(a.ElementType)),
         TransformTypeNode t                                                   => new MgFuncPtr(ResolveTypeNode(t.From), ResolveTypeNode(t.To)),
@@ -539,6 +540,36 @@ public class TypeChecker
 
     private static MgType StdlibReturnType(string name) => name switch
     {
+        // std.time
+        "std.time.now"       => MgTypes.Int64,
+        "std.time.clock"     => MgTypes.Int64,
+        "std.time.diff"      => MgTypes.Float64,
+        "std.time.sleep"     => MgTypes.Void,
+        // std.env
+        "std.env.get"        => new MgArray(MgTypes.Char),
+        // std.sync
+        "std.sync.mutex"     => new MgArray(MgTypes.Void),
+        "std.sync.lock"      => MgTypes.Void,
+        "std.sync.unlock"    => MgTypes.Void,
+        "std.sync.mutex_free" => MgTypes.Void,
+        // std.fs
+        "std.fs.rename"      => MgTypes.Int,
+        "std.fs.remove"      => MgTypes.Int,
+        "std.fs.exists"      => MgTypes.Int,
+        // std.proc
+        "std.proc.spawn"     => MgTypes.Int,
+        "std.proc.pid"       => MgTypes.Int,
+        // std.delta
+        "std.delta.d2"       => new MgStruct("delta"),
+        "std.delta.d3"       => new MgStruct("delta"),
+        "std.delta.mag"      => MgTypes.Float64,
+        "std.delta.dx"       => MgTypes.Float64,
+        "std.delta.dy"       => MgTypes.Float64,
+        "std.delta.dz"       => MgTypes.Float64,
+        // process.thread
+        "process.thread"     => MgTypes.Void,
+        "process.join"       => MgTypes.Void,
+        // sys
         "sys.exit"           => MgTypes.Void,
         "std.mem.alloc"      => new MgArray(MgTypes.Void),
         "std.mem.calloc"     => new MgArray(MgTypes.Void),

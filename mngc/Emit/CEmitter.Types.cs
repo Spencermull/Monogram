@@ -10,9 +10,10 @@ public partial class CEmitter
         // stdlib types — pull in module header, erase generic params to void* in C
         NamedTypeNode { Name: "node", GenericArgs: { Count: >= 2 } }        => TrackModule("node", "mgnode_xform_t*"),
         NamedTypeNode { Name: "node" }                                       => TrackModule("node", "mgnode_t*"),
-        NamedTypeNode { Name: "lattice" }                                    => TrackModule("lattice", "mglattice_t*"),
-        NamedTypeNode { Name: "slice" }                                      => TrackModule("slice",   "mgslice_t*"),
-        ArrayTypeNode { ElementType: NamedTypeNode { Name: "process" } }     => TrackModule("process", "mgprocess_t*"),
+        NamedTypeNode { Name: "lattice" }                                    => TrackModule("lattice",   "mglattice_t*"),
+        NamedTypeNode { Name: "slice" }                                      => TrackModule("slice",     "mgslice_t*"),
+        ArrayTypeNode { ElementType: NamedTypeNode { Name: "process" } }     => TrackModule("process",   "mgprocess_t*"),
+        NamedTypeNode { Name: "delta" }                                      => TrackModule("std.delta", "mgdelta_t"),
         // general
         NamedTypeNode n      => n.GenericArgs.Count == 0
                                     ? n.Name

@@ -82,10 +82,19 @@ public partial class CEmitter
                 _requiredHeaders.Add("<string.h>");
                 _requiredHeaders.Add("<math.h>");
                 return true;
-            case "node":    _requiredHeaders.Add("node");    return true;
-            case "lattice": _requiredHeaders.Add("lattice"); return true;
-            case "process": _requiredHeaders.Add("process"); return true;
-            case "slice":   _requiredHeaders.Add("slice");   return true;
+            case "std.time":  _requiredHeaders.Add("std.time");  return true;
+            case "std.env":   _requiredHeaders.Add("<stdlib.h>"); return true;
+            case "std.sync":  _requiredHeaders.Add("std.sync");  return true;
+            case "std.fs":    _requiredHeaders.Add("std.fs");    return true;
+            case "std.proc":  _requiredHeaders.Add("std.proc");  return true;
+            case "std.delta": _requiredHeaders.Add("std.delta"); return true;
+            case "node":      _requiredHeaders.Add("node");      return true;
+            case "lattice":   _requiredHeaders.Add("lattice");   return true;
+            case "process":   _requiredHeaders.Add("process");   return true;
+            case "slice":     _requiredHeaders.Add("slice");     return true;
+            case "mono.phase":
+            case "mono.sync":
+                _requiredHeaders.Add("mono.phase"); return true;
             default: return false;
         }
     }
